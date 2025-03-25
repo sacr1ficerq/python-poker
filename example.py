@@ -1,6 +1,4 @@
-from table import Table
-from player import Player
-from deck import Deck
+from pokergame import Table, Player
 
 
 def pretty_print(state):
