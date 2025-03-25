@@ -15,5 +15,5 @@ A modular poker framework supporting Texas Hold'em with web integration capabili
 
 ```bash
 git clone https://github.com/sacr1ficerq/poker-game-manager.git
-cd poker_game
+cd pokergame
 pip install .
