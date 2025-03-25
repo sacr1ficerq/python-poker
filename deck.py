@@ -8,7 +8,7 @@ class Deck:
         self.shuffle()
 
     def fill(self):
-        for nom in list(map(str, range(2, 10+1))) + ['J', 'Q', 'K', 'A']:
+        for nom in list(map(str, range(2, 9+1))) + list('TJQKA'):
             for suit in ['s', 'h', 'd', 'c']:
                 self.deck.append(nom + suit)
 

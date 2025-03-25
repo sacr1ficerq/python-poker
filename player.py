@@ -77,7 +77,7 @@ class Player:
         self.stack -= amount
         self.chips_bet += amount
 
-        print(f'player {self.name} raises {amount}')
+        print(f'player {self.name} calls {amount}')
         self.acted = True
         self.table.current_round.action(amount)
 
