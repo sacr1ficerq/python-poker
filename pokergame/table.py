@@ -1,4 +1,4 @@
-from deck import Deck
+from .deck import Deck
 from itertools import combinations
 
 
