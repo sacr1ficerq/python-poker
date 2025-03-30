@@ -170,7 +170,7 @@ class Round:
         acting = self.players[self.acting].name
         res = {'players': in_game,
                'street': self.street,
-               'pot': self.pot,
                'max_bet': self.max_bet,
-               'acting': acting}
+               'acting': acting,
+               'board': self.board}
         return res
