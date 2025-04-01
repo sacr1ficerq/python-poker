@@ -25,6 +25,8 @@ class Round:
         self.max_bet = 0
         self.board = []
 
+        self.winners = []
+
         self.acting = 0  # index of player who is currently to act
 
     # streets
@@ -87,7 +89,9 @@ class Round:
         def rank(pair):
             return (pair[0]['rank'], pair[0]['combination'])
 
-        pairs = sorted(zip(evals, range(len(self.players))), key=rank, reverse=True)
+        pairs = sorted(zip(evals, range(len(self.players))),
+                       key=rank,
+                       reverse=True)
         winners = []
         for p in pairs:
             if p[0]['combination'] != pairs[0][0]['combination']:
@@ -128,20 +132,12 @@ class Round:
             return
 
         # next to act
-        for i, p in enumerate(self.players):
-            if p.is_acting:
-                p.is_acting = False
-                next_p = to_act[(i + 1) % len(to_act)]
-                next_p.is_acting = True
-
-                # print(f'now action on player {next_p.name}')
-                break
+        self.acting = (self.acting + 1) % len(self.players)
 
     def next_street(self):
         for p in self.players:
             p.chips_bet = 0
             p.acted = False
-        self.is_acting = 0
         self.max_bet = 0
 
         if self.street == 'preflop':
@@ -154,23 +150,32 @@ class Round:
             self.showdown()
 
     def win(self, player_names):
-        winners = []  # TODO: manage situations with all_ins
+        self.winners = []  # TODO: manage situations with all_ins
         for p in self.players:
             if p.name in player_names:
-                winners.append(p)
-        assert len(winners) != 0, 'no winners'
-        for w in winners:
-            w.stack += self.pot / len(winners)
+                self.winners.append(p)
+        assert len(self.winners) != 0, 'no self.winners'
+        for w in self.winners:
+            w.stack += self.pot / len(self.winners)
 
-        print('winners:', winners)
-        self.table.new_round()
+        print('self.winners:', self.winners)
 
     def state(self):
-        in_game = [p.name for p in self.players]
-        acting = self.players[self.acting].name
-        res = {'players': in_game,
-               'street': self.street,
-               'max_bet': self.max_bet,
-               'acting': acting,
-               'board': self.board}
+        res = {}
+        if self.street == 'showdown':
+            players = [p.private_state() for p in self.players]
+            res = {'players': players,
+                   'winners': self.winners,
+                   'street': self.street,
+                   'board': self.board,
+                   'pot': self.pot}
+        else:
+            players = [p.name for p in self.players]
+            acting = self.players[self.acting].name
+            res = {'players': players,
+                   'street': self.street,
+                   'max_bet': self.max_bet,
+                   'acting': acting,
+                   'board': self.board,
+                   'pot': self.pot}
         return res

@@ -37,7 +37,7 @@ class Player:
                 }
 
     def private_state(self):
-        return {'cards': self.cards}
+        return {'name': self.name, 'cards': self.cards}
 
     def __repr__(self):
         return f'player: \'{self.name}\'\tchips: {self.stack}'
@@ -45,28 +45,26 @@ class Player:
     def deal(self, cards):
         assert len(cards) == 2
         self.folded = False
-        self.is_acting = False
 
         self.cards = cards
 
     def act(self, action: Action, amount):
+        assert not self.folded, 'player already folded'
         max_bet = self.table.current_round.max_bet
         print(f'player: {self.name}\t action:{action}')
         match action:
             case Action.FOLD:
                 self.fold(max_bet)
             case Action.CHECK:
-                self.check(amount, max_bet)
+                self.check(max_bet)
             case Action.CALL:
-                self.call(amount, max_bet)
+                self.call(max_bet)
             case Action.BET:
                 self.bet(amount, max_bet)
             case Action.RAISE:
                 self.raise_bet(amount, max_bet)
 
     def bet(self, amount, max_bet):
-        assert not self.folded, 'player already folded'
-        assert self.is_acting
         if amount >= self.stack:
             self.all_in = True
             amount = self.stack
@@ -80,7 +78,6 @@ class Player:
 
     def raise_bet(self, amount, max_bet):
         assert max_bet != 0, 'cant raise while bet == 0'
-        assert not self.folded, 'player already folded'
         if amount >= self.stack:
             self.all_in = True
             amount = self.stack
@@ -94,7 +91,6 @@ class Player:
 
     def call(self, max_bet):
         assert max_bet != 0, 'cant call while bet == 0'
-        assert not self.folded, 'player already folded'
         amount = max_bet - self.chips_bet
         if amount >= self.stack:
             self.all_in = True
@@ -108,29 +104,27 @@ class Player:
         self.table.current_round.action(amount)
 
     def check(self, max_bet=0):
-        assert max_bet == 0, 'cant check while bet != 0'
-        assert not self.folded, 'player already folded'
+        round = self.table.current_round
+        assert max_bet == 0 \
+            or round.street == 'preflop'\
+            and round.max_bet == self.bet, \
+            'cant check'
 
         print(f'player {self.name} checks')
         self.acted = True
-        self.table.current_round.action(0)
+        round.action(0)
 
     def fold(self, max_bet=0):
-        assert not self.folded, 'player already folded'
-
         self.folded = True
         print(f'player {self.name} folds')
         self.acted = True
         self.table.current_round.action(0)
 
     def blind(self, amount):
-        assert not self.folded, 'player already folded'
         if amount >= self.stack:
             self.all_in = True
             amount = self.stack
-
         self.stack -= amount
         self.chips_bet += amount
-
         print(f'player {self.name} posts blind {amount}')
         self.table.current_round.action(amount)
