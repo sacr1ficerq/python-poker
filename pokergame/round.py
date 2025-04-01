@@ -5,10 +5,10 @@ from .deck import Deck
 class Round:
     def __init__(self, players, table):
         # players in game (including all_in) sorted by left to act
-        first = table.button + 1
+        first = (table.button + 1) % 2
 
-        self.players = players[first:] + players[:first]
-        assert len(players) >= 2, 'not enough players'
+        assert len(players) == 2, 'wrong amount of players'
+        self.players = [players[first], players[1 - first]]
 
         print('new round')
         print('players:')
@@ -26,6 +26,9 @@ class Round:
         self.board = []
 
         self.winners = []
+        self.round_ended = False
+
+        self.show_hands = False
 
         self.acting = 0  # index of player who is currently to act
 
@@ -36,15 +39,10 @@ class Round:
         for p in self.players:
             cards = [self.deck.pop(), self.deck.pop()]
             p.deal(cards)
-        n = len(self.players)
 
         # blinds
-        if n == 2:
-            sb = 1
-            bb = 0
-        else:
-            sb = 0
-            bb = 1
+        sb = 1  # button
+        bb = 0
 
         for p in self.players:
             p.chips_bet = 0
@@ -77,11 +75,6 @@ class Round:
     def showdown(self):
         print('showdown:')
         print('board:', self.board)
-
-        nom = list(map(str, range(2, 9+1))) + list('TJQKA')
-
-        def high_card(cards):
-            return max(cards, key=lambda c: nom.index(c[:-1]))[:-1]
 
         players_cards = [p.cards for p in self.players]
         evals = evaluate_hand(self.board, players_cards)
@@ -132,7 +125,7 @@ class Round:
             return
 
         # next to act
-        self.acting = (self.acting + 1) % len(self.players)
+        self.acting = (self.acting + 1) % 2
 
     def next_street(self):
         for p in self.players:
@@ -150,6 +143,7 @@ class Round:
             self.showdown()
 
     def win(self, player_names):
+        self.round_ended = True
         self.winners = []  # TODO: manage situations with all_ins
         for p in self.players:
             if p.name in player_names:
@@ -162,8 +156,11 @@ class Round:
 
     def state(self):
         res = {}
-        if self.street == 'showdown':
-            players = [p.private_state() for p in self.players]
+        if self.round_ended:
+            if self.show_hands or self.street == 'showdown':
+                players = [p.private_state() for p in self.players]
+            else:
+                players = [p.name for p in self.players]
             res = {'players': players,
                    'winners': self.winners,
                    'street': self.street,

@@ -38,11 +38,17 @@ class Table:
         return None
 
     def start_game(self):
+        n = len(self.players)
+        assert n == 2, 'wrong amount of players'
+
         self.game_started = True
         self.new_round()
 
     def new_round(self):
-        self.button = (self.button + 1) % len(self.players)
+        n = len(self.players)
+        assert n == 2, 'wrong amount of players'
+
+        self.button = 1 - self.button
         self.current_round = Round(self.players, self)
         self.current_round.preflop()
 

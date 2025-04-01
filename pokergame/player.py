@@ -107,7 +107,7 @@ class Player:
         round = self.table.current_round
         assert max_bet == 0 \
             or round.street == 'preflop'\
-            and round.max_bet == self.bet, \
+            and round.max_bet == self.chips_bet, \
             'cant check'
 
         print(f'player {self.name} checks')

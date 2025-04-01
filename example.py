@@ -15,7 +15,8 @@ def pretty_print(state):
     if 'round' in state:
         print('current round:')
         for k, v in state['round'].items():
-            if k != 'players': print(f'{k:>12}:\t{v:>12}')
+            # if k != 'players': print(f'{k:>12}:\t{v:>12}')
+            print(k, v)
     for d in state['players']:
         for k, v in d.items():
             if k != 'name':
@@ -35,7 +36,6 @@ def generate_id():
 # create table
 t = Table(generate_id(), sb=1, bb=2)
 print("table created")
-
 
 
 # add/remove players
@@ -59,6 +59,9 @@ for player_name in ['zamazer', 'mamaz']:
     print(t.private_state(player_name))
 
 # preflop
-pretty_print(t.state())
-t.act(action=Action.RAISE, player_name='zamazer', amount=10.0)
-pretty_print(t.state())
+# pretty_print(t.state())
+t.act(action=Action.CALL, player_name='mamaz', amount=0.0)
+t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
+# pretty_print(t.state())
+
+
