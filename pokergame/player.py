@@ -1,4 +1,5 @@
 from enum import Enum
+from .round import Street
 
 
 class Action(Enum):
@@ -32,7 +33,7 @@ class Player:
                 'name': self.name,
                 'stack': self.stack,
                 'folded': self.folded,
-                'all_in': self.all_in,
+                'allIn': self.all_in,
                 'bet': self.chips_bet,
                 }
 
@@ -40,7 +41,9 @@ class Player:
         return {'name': self.name, 'cards': self.cards}
 
     def __repr__(self):
-        return f'player: \'{self.name}\'\tchips: {self.stack}'
+        res = [self.name, self.stack, self.folded, self.all_in, self.chips_bet]
+        cols = ['name', 'stack', 'folded', 'all_in', 'chips_bet']
+        return '\t'.join(cols) + '\n' + '\t'.join(map(str, res))
 
     def deal(self, cards):
         assert len(cards) == 2
@@ -48,83 +51,50 @@ class Player:
 
         self.cards = cards
 
-    def act(self, action: Action, amount):
+    def act(self, action: Action, amount=0.0):
+        print(f'player: {self.name}\t action:{action} for {amount}')
         assert not self.folded, 'player already folded'
-        max_bet = self.table.current_round.max_bet
-        print(f'player: {self.name}\t action:{action}')
+        assert not self.all_in, 'player already all_in'
+        round = self.table.current_round
+
+        self.acted = True
+        assert amount <= round.max_bet_amount, 'wrong sizing'
+        assert amount <= self.stack, 'cant bet more then stack'
+
+
+        if amount == self.stack:
+            self.all_in = True
+
         match action:
             case Action.FOLD:
-                self.fold(max_bet)
+                self.folded = True
             case Action.CHECK:
-                self.check(max_bet)
+                assert round.max_bet == 0 \
+                    or (round.street == Street.PREFLOP and self.chips_bet == round.max_bet), \
+                    'cant check with bet != 0'
             case Action.CALL:
-                self.call(max_bet)
+                assert round.max_bet != 0, 'cant call with max_bet == 0'
+                assert amount + self.chips_bet == round.max_bet, \
+                    f'wrong amount, correct amount: {round.max_bet - self.chips_bet}'
             case Action.BET:
-                self.bet(amount, max_bet)
+                assert round.max_bet == 0, 'cant bet with max_bet != 0'
+                assert amount >= round.min_bet_amount
             case Action.RAISE:
-                self.raise_bet(amount, max_bet)
-
-    def bet(self, amount, max_bet):
-        if amount >= self.stack:
-            self.all_in = True
-            amount = self.stack
+                assert round.max_bet != 0
+                assert amount >= round.min_bet_amount
 
         self.stack -= amount
         self.chips_bet += amount
 
-        print(f'player {self.name} bets {amount}')
-        self.acted = True
         self.table.current_round.action(amount)
-
-    def raise_bet(self, amount, max_bet):
-        assert max_bet != 0, 'cant raise while bet == 0'
-        if amount >= self.stack:
-            self.all_in = True
-            amount = self.stack
-
-        self.stack -= amount + max_bet - self.chips_bet
-        self.chips_bet += amount + max_bet - self.chips_bet
-
-        print(f'player {self.name} raises {amount}')
-        self.acted = True
-        self.table.current_round.action(amount)
-
-    def call(self, max_bet):
-        assert max_bet != 0, 'cant call while bet == 0'
-        amount = max_bet - self.chips_bet
-        if amount >= self.stack:
-            self.all_in = True
-            amount = self.stack
-
-        self.stack -= amount
-        self.chips_bet += amount
-
-        print(f'player {self.name} calls {amount}')
-        self.acted = True
-        self.table.current_round.action(amount)
-
-    def check(self, max_bet=0):
-        round = self.table.current_round
-        assert max_bet == 0 \
-            or round.street == 'preflop'\
-            and round.max_bet == self.chips_bet, \
-            'cant check'
-
-        print(f'player {self.name} checks')
-        self.acted = True
-        round.action(0)
-
-    def fold(self, max_bet=0):
-        self.folded = True
-        print(f'player {self.name} folds')
-        self.acted = True
-        self.table.current_round.action(0)
 
     def blind(self, amount):
-        if amount >= self.stack:
-            self.all_in = True
-            amount = self.stack
+        print(f'player {self.name} posts blind {amount}')
+
+        assert not self.folded, 'player already folded'
+        assert not self.all_in, 'player already all_in'
+
+        assert amount < self.stack, 'dont have enough for blind'
+
         self.stack -= amount
         self.chips_bet += amount
-        print(f'player {self.name} posts blind {amount}')
-        self.table.current_round.action(amount)

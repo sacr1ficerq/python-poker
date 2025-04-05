@@ -25,6 +25,9 @@ class Table:
 
     def state(self):
         players = [p.state() for p in self.players]
+        if not self.game_started:
+            return {'players': players}
+
         but = self.players[self.button].name
         res = {'players': players, 'button': but}
         if self.current_round:
@@ -45,6 +48,7 @@ class Table:
         self.new_round()
 
     def new_round(self):
+        assert self.game_started
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
 
@@ -53,7 +57,10 @@ class Table:
         self.current_round.preflop()
 
     def act(self, action: Action, player_name: str, amount: float):
+        round = self.current_round
         assert isinstance(amount, float)
+        assert round is not None
+        assert round.players[round.acting].name == player_name, f'its not {player_name} turn'
         for p in self.players:
             if p.name == player_name:
                 p.act(action=action, amount=amount)
