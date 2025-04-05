@@ -5,10 +5,10 @@ from enum import Enum
 
 
 class Street(Enum):
-    PREFLOP = 'prefop',
-    FLOP = 'flop',
-    TURN = 'turn',
-    RIVER = 'river',
+    PREFLOP = 'prefop'
+    FLOP = 'flop'
+    TURN = 'turn'
+    RIVER = 'river'
     SHOWDOWN = 'showdown'
 
 
@@ -39,7 +39,7 @@ class Round:
         self.round_ended = False
 
         self.max_bet_amount = min(self.players[0].stack, self.players[0].stack)
-        self.min_bet_amount = self.table.bb
+        self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
 
         self.show_hands = False
 
@@ -64,6 +64,7 @@ class Round:
         self.players[bb].blind(self.bb)
         self.max_bet = self.bb
         self.pot += self.sb + self.bb
+        self.min_bet_amount = self.sb + self.bb
 
     def action(self, delta):
         """
@@ -78,8 +79,9 @@ class Round:
             # assert delta >= self.min_bet_amount\
             #   or self.players[self.acting].all_in, \
             #    'wrong sizing'
-            self.min_bet_amount = max(self.table.bb, delta)  # raise step
-            self.max_bet_amount = villain.stack + delta  # max new delta
+            step = villain.chips_bet - hero.chips_bet
+            self.min_bet_amount = max(self.table.bb, step * 2)  # raise step
+            self.max_bet_amount = villain.stack + step  # max new delta
             self.min_bet_amount = min(self.min_bet_amount, self.max_bet_amount)
 
         self.pot += delta
@@ -177,14 +179,14 @@ class Round:
     def state(self):
         res = {}
         if self.round_ended:
-            if self.show_hands or self.street == 'showdown':
+            if self.show_hands or self.street == Street.SHOWDOWN:
                 players = [p.private_state() for p in self.players]
             else:
                 players = [p.name for p in self.players]
             winners = [w.name for w in self.winners]
             res = {'players': players,
                    'winners': winners,
-                   'street': self.street,
+                   'street': self.street.value,
                    'board': self.board,
                    'pot': self.pot,
                    'roundEnded': 1}
@@ -192,7 +194,7 @@ class Round:
             players = [p.name for p in self.players]
             acting = self.players[self.acting].name
             res = {'players': players,
-                   'street': self.street,
+                   'street': self.street.value,
                    'maxBet': self.max_bet,
                    'acting': acting,
                    'board': self.board,
