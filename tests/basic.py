@@ -47,22 +47,22 @@ def test_checkdown_2():
     # preflop
     t.act(Action.CALL, 'b', 1.0)
     t.act(Action.CHECK, 'a', 0.0)
-    street = t.state()['round']['street']
+    street = t.state().round.street
     assert street == 'flop', street
     # flop
     t.act(Action.CHECK, 'a', 0.0)
     t.act(Action.CHECK, 'b', 0.0)
-    street = t.state()['round']['street']
+    street = t.state().round.street
     assert street == 'turn', street
     # turn
     t.act(Action.CHECK, 'a', 0.0)
     t.act(Action.CHECK, 'b', 0.0)
-    street = t.state()['round']['street']
+    street = t.state().round.street
     assert street == 'river', street
     # river
     t.act(Action.CHECK, 'a', 0.0)
     t.act(Action.CHECK, 'b', 0.0)
-    street = t.state()['round']['street']
+    street = t.state().round.street
     assert street == 'showdown', street
     # Hand 2
     t.new_round()

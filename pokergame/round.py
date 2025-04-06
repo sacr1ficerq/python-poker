@@ -1,21 +1,14 @@
 from .evaluate import evaluate_hand
 from .deck import Deck
+from .player import PlayerState
 
-from enum import Enum
-
-
-class Street(Enum):
-    PREFLOP = 'prefop'
-    FLOP = 'flop'
-    TURN = 'turn'
-    RIVER = 'river'
-    SHOWDOWN = 'showdown'
+from .states import RoundData, Street
 
 
 class Round:
     def __init__(self, players, table):
         # players in game (including all_in) sorted by left to act
-        first = (table.button + 1) % 2
+        first = 1 - table.button
 
         assert len(players) == 2, 'wrong amount of players'
         self.players = [players[first], players[1 - first]]
@@ -23,8 +16,13 @@ class Round:
         print('new round')
         print('players:')
         print(*map(lambda p: p.name, self.players), sep='\n')
+        for p in self.players:
+            p.chips_bet = 0
+            p.acted = False
+            p.player_state = PlayerState.BASE
 
         self.table = table
+        self.button = table.button
 
         self.sb = table.sb
         self.bb = table.bb
@@ -35,13 +33,10 @@ class Round:
         self.max_bet = 0
         self.board = []
 
-        self.winners = []
         self.round_ended = False
 
         self.max_bet_amount = min(self.players[0].stack, self.players[0].stack)
         self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
-
-        self.show_hands = False
 
         self.acting = 0  # index of player who is currently to act
 
@@ -60,25 +55,27 @@ class Round:
             p.chips_bet = 0
 
         self.acting = sb
+        self.players[sb].player_state = PlayerState.ACTING
+
         self.players[sb].blind(self.sb)
         self.players[bb].blind(self.bb)
         self.max_bet = self.bb
-        self.pot += self.sb + self.bb
+        self.pot = self.sb + self.bb
         self.min_bet_amount = self.sb + self.bb
 
     def action(self, delta):
         """
         Called after player acted
-        delta: fresh chips put in pot
+        delta: fresh chips put into the pot
         """
-        villain = self.players[self.acting]
-        hero = self.players[1 - self.acting]  # now acting
+        villain = self.players[self.acting]  # just acted
+
+        self.acting = 1 - self.acting
+        hero = self.players[self.acting]
+        hero.player_state = PlayerState.ACTING
 
         assert delta >= 0
         if delta != 0:
-            # assert delta >= self.min_bet_amount\
-            #   or self.players[self.acting].all_in, \
-            #    'wrong sizing'
             step = villain.chips_bet - hero.chips_bet
             self.min_bet_amount = max(self.table.bb, step * 2)  # raise step
             self.max_bet_amount = villain.stack + step  # max new delta
@@ -87,30 +84,30 @@ class Round:
         self.pot += delta
         self.max_bet = villain.chips_bet
 
-        if villain.folded:
-            self.win([hero.name])
+        if villain.player_state == PlayerState.FOLDED:
+            self.win([hero])
             return
 
-        self.acting = 1 - self.acting
+        if hero.chips_bet != villain.chips_bet:
+            return  # waiting for hero move
 
-        if (villain.acted or villain.all_in) and \
-           (hero.acted or hero.all_in) and \
-           (hero.chips_bet == villain.chips_bet):
-            # everyone acted or all in, and bets equalized
+        # bets equalized
+        if (hero.is_all_in() or villain.is_all_in()):
+            self.run()
+
+        if hero.acted and villain.acted:
+            # everyone acted and bets equalized
             self.next_street()
 
     def next_street(self):
-        villain = self.players[1 - self.acting]
-        hero = self.players[self.acting]  # now acting
-
-        hero.chips_bet = 0
-        hero.acted = False
-
-        villain.chips_bet = 0
-        villain.acted = False
+        for p in self.players:
+            p.chips_bet = 0
+            p.acted = False
+            p.player_state = PlayerState.BASE
 
         self.max_bet = 0
         self.acting = 0
+        self.players[self.acting].player_state = PlayerState.ACTING
 
         match self.street:
             case Street.PREFLOP:
@@ -134,9 +131,7 @@ class Round:
                 self.street = Street.SHOWDOWN
                 self.showdown()
             case Street.SHOWDOWN:
-                return  # wait for next round
-        if hero.all_in or villain.all_in:
-            self.next_street()
+                return  # wait for next round start
 
     def showdown(self):
         print('showdown:')
@@ -155,51 +150,26 @@ class Round:
         for p in pairs:
             if p[0]['combination'] != pairs[0][0]['combination']:
                 break
-            winners.append(self.players[p[1]].name)
-
-        print(*evals, sep='\n')
-        print('winners:', winners)
+            winners.append(self.players[p[1]])
 
         self.win(winners)
 
-    def win(self, player_names):
-        print(f'{player_names} won')
+    def win(self, winners):
         self.round_ended = True
-        self.winners = []  # TODO: manage situations with all_ins
-        for p in self.players:
-            if p.name in player_names:
-                self.winners.append(p)
-        assert len(self.winners) != 0, 'no self.winners'
-        for w in self.winners:
-            w.stack += self.pot / len(self.winners)
-            print(f'{w.name} wins {self.pot / len(self.winners)}')
+        for w in winners:
+            chips_won = self.pot / len(winners)
+            w.stack += chips_won
+            w.player_state = PlayerState.WINNING
+            print(f'{w.name} wins {chips_won}')
 
-        print('self.winners:', self.winners)
+        print('winners:', winners)
 
-    def state(self):
-        res = {}
-        if self.round_ended:
-            if self.show_hands or self.street == Street.SHOWDOWN:
-                players = [p.private_state() for p in self.players]
-            else:
-                players = [p.name for p in self.players]
-            winners = [w.name for w in self.winners]
-            res = {'players': players,
-                   'winners': winners,
-                   'street': self.street.value,
-                   'board': self.board,
-                   'pot': self.pot,
-                   'roundEnded': 1}
-        else:
-            players = [p.name for p in self.players]
-            acting = self.players[self.acting].name
-            res = {'players': players,
-                   'street': self.street.value,
-                   'maxBet': self.max_bet,
-                   'acting': acting,
-                   'board': self.board,
-                   'pot': self.pot,
-                   'maxBetAmount': self.max_bet_amount,
-                   'minBetAmount': self.min_bet_amount,
-                   'roundEnded': 0}
-        return res
+    def state(self) -> RoundData:
+        return RoundData(self.street.value,
+                         self.max_bet,
+                         self.board,
+                         self.pot,
+                         self.max_bet_amount,
+                         self.min_bet_amount,
+                         self.round_ended,
+                         self.players[1].name)

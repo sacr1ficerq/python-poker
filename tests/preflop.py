@@ -7,9 +7,11 @@ import pytest
 @pytest.fixture
 def t():
     table = Table('test_table', sb=0.5, bb=1)
-    table.add_player(1, 'BB', 100)
-    table.add_player(2, 'BUT', 100)
+    table.add_player(0, 'BB', 100)
+    table.add_player(1, 'BUT', 100)
+    print(f'button: {table.players[table.button]}')
     table.start_game()
+
     return table
 
 
@@ -28,8 +30,8 @@ def test_small_blind_call(t, players):
 def test_fold(t, players):
     t.act(Action.FOLD, 'BUT', 0.0)
 
-    assert players['BB'].stack == 100.5
-    assert players['BUT'].stack == 99.5
+    assert players['BB'].stack == 100.5, players['BB'].stack
+    assert players['BUT'].stack == 99.5, players['BUT'].stack
 
 
 def test_raise(t, players):
@@ -48,12 +50,12 @@ def test_wrong_amount_call(t):
 
 
 def test_wrong_amount_raise_1(t):
-    assert t.state()['round']['minBetAmount'] == 1.5
+    assert t.state().round.minBetAmount == 1.5
     with pytest.raises(AssertionError):
         t.act(Action.RAISE, 'BUT', 1.49)
 
 
 def test_wrong_amount_raise_2(t):
     t.act(Action.RAISE, 'BUT', 1.5)  # 0.5 + 1.5 = 2bb
-    min_bet = t.state()['round']['minBetAmount']
+    min_bet = t.state().round.minBetAmount
     assert min_bet == 2.0, f'{min_bet}' # 3bb min bet

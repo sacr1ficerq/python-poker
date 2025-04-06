@@ -19,9 +19,7 @@ def pretty_print(state):
             print(k, v)
     for d in state['players']:
         for k, v in d.items():
-            if k == 'id':
-                continue
-            if k != 'name':
+            if k != 'name' and k != 'cards':
                 print(f'{k:>12}:\t{v:>12}')
             else:
                 print(v)
@@ -90,12 +88,12 @@ t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 
 print(*t.players, sep='\n')
 
-# pretty_print(t.state())
 # flop
 t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 
 # turn
+pretty_print(t.state())
 t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 
@@ -103,3 +101,4 @@ t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 
+pretty_print(t.state())

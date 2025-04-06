@@ -32,6 +32,6 @@ def test_showdown_1(t, players):
     t.act(Action.CHECK, 'BB', 0.0)
     t.act(Action.CHECK, 'BUT', 0.0)
 
-    street = t.state()['round']['street']
+    street = t.state().round.street
     assert street == 'showdown', street
 

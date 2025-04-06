@@ -1,5 +1,9 @@
 from .player import Player, Action
 from .round import Round
+from .states import TableData, Street
+
+
+from dataclasses import asdict
 
 
 class Table:
@@ -23,22 +27,38 @@ class Table:
             if p.name == name:
                 self.players.remove(p)
 
-    def state(self):
-        players = [p.state() for p in self.players]
-        if not self.game_started:
-            return {'players': players}
-
-        but = self.players[self.button].name
-        res = {'players': players, 'button': but}
+    def state(self, show_cards=False) -> TableData:
         if self.current_round:
-            res['round'] = self.current_round.state()
-        return res
+            show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
+            players = [p.state(show_cards) for p in self.players]
+            return TableData(players, self.current_round.state())
+        else:
+            players = [p.state() for p in self.players]
+            return TableData(players, None)
+
+
+    def data(self, show_cards=False) -> dict:
+        if self.current_round:
+            show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
+            players = [asdict(p.state(show_cards)) for p in self.players]
+            but = self.players[self.button].name
+            return {'players': players, 'button': but, 'round': asdict(self.current_round.state())}
+
+        players = [asdict(p.state()) for p in self.players]
+        but = self.players[self.button].name
+        return {'players': players, 'button': but}
 
     def private_state(self, player_name):
         for p in self.players:
             if p.name == player_name:
-                return p.private_state()
-        return None
+                return p.state(show_cards=True)
+        assert False, 'player not found'
+
+    def private_data(self, player_name) -> dict:
+        for p in self.players:
+            if p.name == player_name:
+                return asdict(p.state(show_cards=True))
+        assert False, 'player not found'
 
     def start_game(self):
         n = len(self.players)
@@ -58,7 +78,7 @@ class Table:
 
     def act(self, action: Action, player_name: str, amount: float):
         round = self.current_round
-        assert isinstance(amount, float)
+        assert isinstance(amount, float) or isinstance(amount, int)
         assert round is not None
         assert round.players[round.acting].name == player_name, f'its not {player_name} turn'
         for p in self.players:
@@ -67,5 +87,5 @@ class Table:
                 return
         assert False, 'wrong player name'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'sb: {self.sb}\t bb: {self.bb}\nplayers: {self.players}'
