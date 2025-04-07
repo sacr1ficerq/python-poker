@@ -57,6 +57,36 @@ def test_all_in_2(t, players):
         assert p.state == 'winning' or p.state == 'loosing', 'state: ' + p.state
 
 
+def test_all_in_3(t, players):
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 100)
+    table.add_player(1, 'BUT', 200)
+    table.start_game()
+    table.act(Action.RAISE, 'BUT', 100-5)
+    table.act(Action.CALL, 'BB', 100-10)
+
+    for p in table.state().players:
+        assert (p.state == 'loosing') \
+            or (p.state == 'winning'), \
+            table.state().players
+
+
+def test_all_in_4(t, players):
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 200)
+    table.add_player(1, 'BUT', 100)
+    table.start_game()
+    table.act(Action.RAISE, 'BUT', 100-5)
+    table.act(Action.CALL, 'BB', 100-10)
+
+    for p in table.state().players:
+        assert (p.state == 'loosing') \
+            or (p.state == 'winning'), \
+            table.state().players
+
+
 def test_all_in_blind_1():
     # preflop
     table = Table('test_table', 5, 10)

@@ -73,6 +73,8 @@ class Table:
 
     def new_round(self):
         assert self.game_started
+        assert self.current_round is None or self.current_round.round_ended, \
+               'cant start new round while current round not emded'
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
 

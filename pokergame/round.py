@@ -120,8 +120,9 @@ class Round:
         if (hero.is_all_in() and villain.is_all_in()):
             return self.run()
 
-        hero.player_state = PlayerState.ACTING
-        print(f'{hero.name} acting')
+        if not hero.is_all_in():
+            hero.player_state = PlayerState.ACTING
+            print(f'{hero.name} acting')
 
         assert delta >= 0
         if delta != 0:
@@ -203,6 +204,8 @@ class Round:
         self.win(winners)
 
     def run(self):
+        for p in self.players:
+            p.chips_bet = 0
         hero_state = self.players[0].player_state.value
         villain_state = self.players[1].player_state.value
         assert 'all-in' in [hero_state, villain_state], \
