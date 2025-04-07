@@ -54,6 +54,47 @@ class Round:
         for p in self.players:
             p.chips_bet = 0
 
+        sb_player = self.players[sb]
+        bb_player = self.players[bb]
+        max_bet = min(sb_player.stack, bb_player.stack)
+
+        # DON'T REFACTOR THIS MESS UNTIL MVP READY
+        if max_bet <= self.bb:
+            if max_bet <= self.sb:
+                # basicaly both all in for effective stack
+                sb_player.stack -= max_bet
+                sb_player.chips_bet += max_bet
+                self.pot += max_bet
+                if sb_player.stack == 0:
+                    sb_player.player_state = PlayerState.ALLIN
+
+                bb_player.stack -= max_bet
+                bb_player.chips_bet += max_bet
+                self.pot += max_bet
+                self.max_bet = max_bet
+                if bb_player.stack == 0:
+                    bb_player.player_state = PlayerState.ALLIN
+                self.run()
+            else:
+                # self.sb < max_bet <= self.bb
+                # bb all_in for effective stack, sb has desicion
+                sb_player.stack -= self.sb
+                sb_player.chips_bet += self.sb
+                self.pot += self.sb
+                sb_player.player_state = PlayerState.ACTING
+                self.acting = sb
+
+                bb_player.stack -= max_bet
+                bb_player.chips_bet += max_bet
+                self.pot += max_bet
+                self.max_bet = max_bet
+
+                if bb_player.stack == 0:
+                    bb_player.player_state = PlayerState.ALLIN
+                self.max_bet_amount = max_bet - self.sb
+                self.min_bet_amount = max_bet - self.sb
+            return
+
         self.acting = sb
         self.players[sb].player_state = PlayerState.ACTING
 
@@ -62,6 +103,7 @@ class Round:
         self.max_bet = self.bb
         self.pot = self.sb + self.bb
         self.min_bet_amount = self.sb + self.bb
+        self.max_bet_amount = min(self.players[sb].stack, self.players[bb].stack + self.sb)
 
     def action(self, delta):
         """
@@ -69,10 +111,17 @@ class Round:
         delta: fresh chips put into the pot
         """
         villain = self.players[self.acting]  # just acted
-
         self.acting = 1 - self.acting
         hero = self.players[self.acting]
+
+        self.pot += delta
+        self.max_bet = villain.chips_bet
+
+        if (hero.is_all_in() and villain.is_all_in()):
+            return self.run()
+
         hero.player_state = PlayerState.ACTING
+        print(f'{hero.name} acting')
 
         assert delta >= 0
         if delta != 0:
@@ -80,9 +129,6 @@ class Round:
             self.min_bet_amount = max(self.table.bb, step * 2)  # raise step
             self.max_bet_amount = villain.stack + step  # max new delta
             self.min_bet_amount = min(self.min_bet_amount, self.max_bet_amount)
-
-        self.pot += delta
-        self.max_bet = villain.chips_bet
 
         if villain.player_state == PlayerState.FOLDED:
             self.win([hero])
@@ -93,7 +139,7 @@ class Round:
 
         # bets equalized
         if (hero.is_all_in() or villain.is_all_in()):
-            self.run()
+            return self.run()
 
         if hero.acted and villain.acted:
             # everyone acted and bets equalized
@@ -104,10 +150,12 @@ class Round:
             p.chips_bet = 0
             p.acted = False
             p.player_state = PlayerState.BASE
+            print(f'{p.name} chilling')
 
         self.max_bet = 0
         self.acting = 0
         self.players[self.acting].player_state = PlayerState.ACTING
+        print(f'{self.players[self.acting].name} acting')
 
         match self.street:
             case Street.PREFLOP:
@@ -154,8 +202,43 @@ class Round:
 
         self.win(winners)
 
+    def run(self):
+        hero_state = self.players[0].player_state.value
+        villain_state = self.players[1].player_state.value
+        assert 'all-in' in [hero_state, villain_state], \
+            'no one is all-in ' + hero_state + ' ' + villain_state
+
+        self.max_bet = 0
+
+        match self.street:
+            case Street.PREFLOP:
+                self.street = Street.FLOP
+                flop_cards = [self.deck.pop(),
+                              self.deck.pop(),
+                              self.deck.pop()]
+                print(f'flop: {flop_cards}')
+                self.board = flop_cards
+            case Street.FLOP:
+                self.street = Street.TURN
+                turn_cards = [self.deck.pop()]
+                print(f'turn: {turn_cards}')
+                self.board += turn_cards
+            case Street.TURN:
+                self.street = Street.RIVER
+                river_cards = [self.deck.pop()]
+                print(f'river: {river_cards}')
+                self.board += river_cards
+            case Street.RIVER:
+                self.street = Street.SHOWDOWN
+                return self.showdown()
+            case Street.SHOWDOWN:
+                return  # wait for next round start
+        self.run()
+
     def win(self, winners):
         self.round_ended = True
+        for p in self.players:
+            p.player_state = PlayerState.LOOSING
         for w in winners:
             chips_won = self.pot / len(winners)
             w.stack += chips_won
@@ -163,6 +246,8 @@ class Round:
             print(f'{w.name} wins {chips_won}')
 
         print('winners:', winners)
+        print('loosers:', list(filter(lambda p: p.player_state == PlayerState.LOOSING, self.players)))
+        print('players: ', [p.state() for p in self.players])
 
     def state(self) -> RoundData:
         return RoundData(self.street.value,

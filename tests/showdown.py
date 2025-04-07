@@ -3,12 +3,15 @@ from pokergame.player import Action
 
 import pytest
 
+SB = 0.5
+BB = 1
+
 
 @pytest.fixture
 def t():
-    table = Table('test_table', sb=0.5, bb=1)
-    table.add_player(1, 'BB', 100)
-    table.add_player(2, 'BUT', 100)
+    table = Table('test_table', SB, BB)
+    table.add_player(0, 'BB', 100)
+    table.add_player(1, 'BUT', 100)
     table.start_game()
     return table
 
@@ -20,7 +23,7 @@ def players(t):
 
 def test_showdown_1(t, players):
     # preflop
-    t.act(Action.CALL, 'BUT', 0.5)
+    t.act(Action.CALL, 'BUT', SB)
     t.act(Action.CHECK, 'BB', 0.0)
     # flop
     t.act(Action.CHECK, 'BB', 0.0)
@@ -32,6 +35,8 @@ def test_showdown_1(t, players):
     t.act(Action.CHECK, 'BB', 0.0)
     t.act(Action.CHECK, 'BUT', 0.0)
 
-    street = t.state().round.street
+    state = t.state()
+    street = state.round.street
     assert street == 'showdown', street
-
+    for p in state.players:
+        assert p.state == 'winning' or p.state == 'loosing'

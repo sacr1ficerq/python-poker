@@ -1,0 +1,107 @@
+from pokergame.table import Table
+from pokergame.player import Action
+
+import pytest
+
+SB = 0.5
+BB = 1
+DEPTH = 100
+
+
+@pytest.fixture
+def t():
+    table = Table('test_table', SB, BB)
+    table.add_player(0, 'BB', DEPTH)
+    table.add_player(1, 'BUT', DEPTH)
+    table.start_game()
+    return table
+
+
+@pytest.fixture
+def players(t):
+    return {p.name: p for p in t.players}
+
+
+def test_all_in_0(t, players):
+    # preflop
+    t.act(Action.RAISE, 'BUT', players['BUT'].stack)
+    hero = players['BUT'].state()
+    assert hero.state == 'all-in'
+
+
+def test_all_in_1(t, players):
+    # preflop
+
+    with pytest.raises(AssertionError):
+        t.act(Action.RAISE, 'BUT', players['BUT'].stack + 0.001)
+
+
+def test_all_in_2(t, players):
+    # preflop
+    assert players['BUT'].stack == DEPTH - SB, players['BUT'].stack
+    t.act(Action.RAISE, 'BUT', players['BUT'].stack)
+    t.act(Action.CALL, 'BB', DEPTH - BB)
+
+    # flop
+    # turn
+    # river
+    # showdown
+
+    state = t.state()
+    street = state.round.street
+    board = state.round.board
+    assert street == 'showdown', street
+    assert len(board) == 3 + 1 + 1, board
+    print(state)
+    for p in state.players:
+        assert p.state == 'winning' or p.state == 'loosing', 'state: ' + p.state
+
+
+def test_all_in_blind_1():
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 10)
+    table.add_player(1, 'BUT', 10)
+    table.start_game()
+
+
+def test_all_in_blind_2():
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 9)
+    table.add_player(1, 'BUT', 9)
+    table.start_game()
+
+    player = table.get_player('BUT').state()
+    assert player.state == 'acting'
+    assert table.state().round.maxBetAmount == 4
+
+    table.act(Action.CALL, 'BUT', 4)
+    for p in table.state().players:
+        assert (p.stack == 0 and p.state == 'loosing') \
+            or (p.stack == 18 and p.state == 'winning'), \
+            table.state().players
+
+
+def test_all_in_blind_3():
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 5)
+    table.add_player(1, 'BUT', 5)
+    table.start_game()
+    for p in table.state().players:
+        assert (p.stack == 0 and p.state == 'loosing') \
+            or (p.stack == 10 and p.state == 'winning'), \
+            table.state().players
+
+
+def test_all_in_blind_4():
+    # preflop
+    table = Table('test_table', 5, 10)
+    table.add_player(0, 'BB', 4)
+    table.add_player(1, 'BUT', 4)
+    table.start_game()
+    for p in table.state().players:
+        assert (p.stack == 0 and p.state == 'loosing') \
+            or (p.stack == 8 and p.state == 'winning'), \
+            table.state().players

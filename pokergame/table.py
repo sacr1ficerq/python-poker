@@ -22,10 +22,17 @@ class Table:
         player = Player(id, name, stack, self)
         self.players.append(player)
 
-    def remove_player(self, name):
+    def get_player(self, name) -> Player:
         for p in self.players:
             if p.name == name:
-                self.players.remove(p)
+                return p
+        return None
+
+    def remove_player(self, name):
+        p = self.get_player(name)
+        if p is None:
+            return
+        self.players.remove(p)
 
     def state(self, show_cards=False) -> TableData:
         if self.current_round:
@@ -35,7 +42,6 @@ class Table:
         else:
             players = [p.state() for p in self.players]
             return TableData(players, None)
-
 
     def data(self, show_cards=False) -> dict:
         if self.current_round:
@@ -49,16 +55,14 @@ class Table:
         return {'players': players, 'button': but}
 
     def private_state(self, player_name):
-        for p in self.players:
-            if p.name == player_name:
-                return p.state(show_cards=True)
-        assert False, 'player not found'
+        p = self.get_player(player_name)
+        assert p is not None, 'player not found'
+        return p.state(show_cards=True)
 
     def private_data(self, player_name) -> dict:
-        for p in self.players:
-            if p.name == player_name:
-                return asdict(p.state(show_cards=True))
-        assert False, 'player not found'
+        p = self.get_player(player_name)
+        assert p is not None, 'player not found'
+        return asdict(p.state(show_cards=True))
 
     def start_game(self):
         n = len(self.players)
@@ -81,11 +85,9 @@ class Table:
         assert isinstance(amount, float) or isinstance(amount, int)
         assert round is not None
         assert round.players[round.acting].name == player_name, f'its not {player_name} turn'
-        for p in self.players:
-            if p.name == player_name:
-                p.act(action=action, amount=amount)
-                return
-        assert False, 'wrong player name'
+        p = self.get_player(player_name)
+        assert p is not None, 'wrong player name'
+        p.act(action=action, amount=amount)
 
     def __repr__(self) -> str:
         return f'sb: {self.sb}\t bb: {self.bb}\nplayers: {self.players}'
