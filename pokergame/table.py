@@ -8,17 +8,21 @@ from dataclasses import asdict
 
 class Table:
     def __init__(self, id, sb, bb):
+        self.id = id
+
         self.bb = bb
         self.sb = sb
         self.players = []
         self.button = 0  # button index
 
-        self.id = id
         self.current_round = None
 
         self.game_started = False
 
     def add_player(self, id, name, stack):
+        self.game_started = False
+        self.current_round = None
+
         player = Player(id, name, stack, self)
         self.players.append(player)
 
@@ -29,6 +33,9 @@ class Table:
         return None
 
     def remove_player(self, name):
+        self.game_started = False
+        self.current_round = None
+
         p = self.get_player(name)
         if p is None:
             return

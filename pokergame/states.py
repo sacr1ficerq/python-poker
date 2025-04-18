@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class Street(Enum):
-    PREFLOP = 'prefop'
+    PREFLOP = 'preflop'
     FLOP = 'flop'
     TURN = 'turn'
     RIVER = 'river'
