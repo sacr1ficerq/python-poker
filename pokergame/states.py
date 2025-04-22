@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from .deck import Card, Holding
 from typing import List, Optional
 from enum import Enum
 
@@ -35,7 +36,7 @@ class PlayerData:
     name: str
     stack: float
     state: str
-    bet: int
+    bet: float
     cards: Optional[str] = None
 
 
@@ -43,7 +44,7 @@ class PlayerData:
 class RoundData:
     street: str
     maxBet: float
-    board: List[str]
+    board: List[Card]
     pot: float
     maxBetAmount: float
     minBetAmount: float

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="poker-game-manager",
+    name="python-poker",
     version="0.1",
     packages=find_packages(),
     description="Library for managing poker game",

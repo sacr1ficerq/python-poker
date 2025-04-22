@@ -1,38 +1,38 @@
 from .player import Player, Action
 from .round import Round
 from .states import TableData, Street
-
+from .deck import Range
 
 from dataclasses import asdict
 
-
 class Table:
-    def __init__(self, id, sb, bb):
+    def __init__(self, id: str, sb: float, bb: float):
         self.id = id
 
+        assert sb <= bb, 'sb > bb'
         self.bb = bb
         self.sb = sb
         self.players = []
         self.button = 0  # button index
 
+        self.current_round: Round | None = None
+
+        self.game_started: bool = False
+
+    def add_player(self, id, name: str, stack: float, preflop_range: Range):
+        self.game_started = False
         self.current_round = None
 
-        self.game_started = False
-
-    def add_player(self, id, name, stack):
-        self.game_started = False
-        self.current_round = None
-
-        player = Player(id, name, stack, self)
+        player = Player(id, name, stack, preflop_range, self)
         self.players.append(player)
 
-    def get_player(self, name) -> Player:
+    def get_player(self, name: str) -> Player | None:
         for p in self.players:
             if p.name == name:
                 return p
         return None
 
-    def remove_player(self, name):
+    def remove_player(self, name: str):
         self.game_started = False
         self.current_round = None
 
@@ -41,7 +41,7 @@ class Table:
             return
         self.players.remove(p)
 
-    def state(self, show_cards=False) -> TableData:
+    def state(self, show_cards: bool=False) -> TableData:
         if self.current_round:
             show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
             players = [p.state(show_cards) for p in self.players]
@@ -50,7 +50,7 @@ class Table:
             players = [p.state() for p in self.players]
             return TableData(players, None)
 
-    def data(self, show_cards=False) -> dict:
+    def data(self, show_cards: bool=False) -> dict:
         if self.current_round:
             show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
             players = [asdict(p.state(show_cards)) for p in self.players]
@@ -71,9 +71,13 @@ class Table:
         assert p is not None, 'player not found'
         return asdict(p.state(show_cards=True))
 
-    def start_game(self):
+    def start_game(self, starting_pot: float):
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
+        assert self.players[0].preflop_range is not None
+        assert self.players[1].preflop_range is not None
+
+        self.starting_pot = starting_pot
 
         self.game_started = True
         self.new_round()
@@ -86,7 +90,7 @@ class Table:
         assert n == 2, 'wrong amount of players'
 
         self.button = 1 - self.button
-        self.current_round = Round(self.players, self)
+        self.current_round = Round(self.players, self, self.starting_pot)
         self.current_round.preflop()
 
     def act(self, action: Action, player_name: str, amount: float):

@@ -1,12 +1,13 @@
 from .evaluate import evaluate_hand
-from .deck import Deck
-from .player import PlayerState
+from .deck import Deck, Card, Holding
+from .player import PlayerState, Player
 
 from .states import RoundData, Street
 
+from typing import List
 
 class Round:
-    def __init__(self, players, table):
+    def __init__(self, players: List[Player], table, starting_pot: float):
         # players in game (including all_in) sorted by left to act
         first = 1 - table.button
 
@@ -38,72 +39,22 @@ class Round:
         self.max_bet_amount = min(self.players[0].stack, self.players[0].stack)
         self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
 
+        self.starting_pot: float = starting_pot
+        self.starting_board = None
+
         self.acting = 0  # index of player who is currently to act
 
     def preflop(self):
-        self.street = Street.PREFLOP
         # deal cards
         for p in self.players:
-            cards = [self.deck.pop(), self.deck.pop()]
-            p.deal(cards)
-
-        # blinds
-        sb = 1  # button
-        bb = 0
+            # TODO: remove unsymmetry
+            holding = self.deck.sample_hand(p.preflop_range)
+            p.deal(holding)
 
         for p in self.players:
             p.chips_bet = 0
-
-        sb_player = self.players[sb]
-        bb_player = self.players[bb]
-        max_bet = min(sb_player.stack, bb_player.stack)
-
-        # DON'T REFACTOR THIS MESS UNTIL MVP READY
-        if max_bet <= self.bb:
-            if max_bet <= self.sb:
-                # basicaly both all in for effective stack
-                sb_player.stack -= max_bet
-                sb_player.chips_bet += max_bet
-                self.pot += max_bet
-                if sb_player.stack == 0:
-                    sb_player.player_state = PlayerState.ALLIN
-
-                bb_player.stack -= max_bet
-                bb_player.chips_bet += max_bet
-                self.pot += max_bet
-                self.max_bet = max_bet
-                if bb_player.stack == 0:
-                    bb_player.player_state = PlayerState.ALLIN
-                self.run()
-            else:
-                # self.sb < max_bet <= self.bb
-                # bb all_in for effective stack, sb has desicion
-                sb_player.stack -= self.sb
-                sb_player.chips_bet += self.sb
-                self.pot += self.sb
-                sb_player.player_state = PlayerState.ACTING
-                self.acting = sb
-
-                bb_player.stack -= max_bet
-                bb_player.chips_bet += max_bet
-                self.pot += max_bet
-                self.max_bet = max_bet
-
-                if bb_player.stack == 0:
-                    bb_player.player_state = PlayerState.ALLIN
-                self.max_bet_amount = max_bet - self.sb
-                self.min_bet_amount = max_bet - self.sb
-            return
-
-        self.acting = sb
-        self.players[sb].player_state = PlayerState.ACTING
-
-        self.players[sb].blind(self.sb)
-        self.players[bb].blind(self.bb)
-        self.max_bet = self.bb
-        self.pot = self.sb + self.bb
-        self.min_bet_amount = self.sb + self.bb
-        self.max_bet_amount = min(self.players[sb].stack, self.players[bb].stack + self.sb)
+        self.pot = self.starting_pot
+        self.next_street()
 
     def action(self, delta):
         """
@@ -161,11 +112,6 @@ class Round:
         match self.street:
             case Street.PREFLOP:
                 self.street = Street.FLOP
-                flop_cards = [self.deck.pop(),
-                              self.deck.pop(),
-                              self.deck.pop()]
-                print(f'flop: {flop_cards}')
-                self.board = flop_cards
             case Street.FLOP:
                 self.street = Street.TURN
                 turn_cards = [self.deck.pop()]
@@ -216,9 +162,12 @@ class Round:
         match self.street:
             case Street.PREFLOP:
                 self.street = Street.FLOP
-                flop_cards = [self.deck.pop(),
-                              self.deck.pop(),
-                              self.deck.pop()]
+                if self.starting_board:
+                    flop_cards = self.starting_board
+                else:
+                    flop_cards = [self.deck.pop(),
+                                  self.deck.pop(),
+                                  self.deck.pop()]
                 print(f'flop: {flop_cards}')
                 self.board = flop_cards
             case Street.FLOP:

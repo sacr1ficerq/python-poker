@@ -1,4 +1,6 @@
-from random import random
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 suits = list('shdc')
 ranks = list('AKQJT98765432')
@@ -56,12 +58,6 @@ class Holding:
     def __repr__(self):
         return f'{self.c1} {self.c2}'
 
-print(Holding(s='AcKh'))
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-
 # Custom color gradient (white to dark green)
 colors = ["#ffffff", "#e5f5e0", "#a1d99b", "#31a354"]
 cmap = LinearSegmentedColormap.from_list("poker", colors)
@@ -84,7 +80,7 @@ class Range:
         return self._range[i, j]
 
     def display(self) -> None:
-        fig, ax = plt.subplots(figsize=(5, 5))
+        _, ax = plt.subplots(figsize=(5, 5))
         
         # Remove all ticks and borders
         ax.set_xticks([])
@@ -115,13 +111,6 @@ class Range:
         ax.set_aspect('equal') # Make cells square
         plt.tight_layout()
         plt.show()
-       
-
-r = Range()
-# Set some sample hands
-r.set_holding(Holding(s='AcAh'), 0.8)     # AA
-r.set_holding(Holding(s='JcAc'), 0.2)     # AA
-r.display()
 
 class Deck:
     def __init__(self):
@@ -148,19 +137,11 @@ class Deck:
         self.card_live[idx2] = False
         return Holding(Card(idx1), Card(idx2))
 
-deck = Deck()
-r1 = Range()
-r1.set_holding(Holding(s='AcAh'), 0.8)     # AA
-r1.set_holding(Holding(s='JcAc'), 0.1)     # AA
-# r1.display()
+    def pop(self) -> Card:
+        d = self.card_live.sum()
+        assert d > 0
+        p = self.card_live / d
+        res = np.random.choice(52, p=p)
+        self.card_live[res] = False
+        return Card(res)
 
-r2 = Range()
-r2.set_holding(Holding(s='KcKh'), 0.3)     # AA
-r2.set_holding(Holding(s='JcAc'), 0.3)     # AA
-# r2.display()
-
-h1 = deck.sample_hand(r1)
-print(f"Player 1: {h1}")
-
-h2 = deck.sample_hand(r2) 
-print(f"Player 2: {h2}")

@@ -1,28 +1,30 @@
 from .states import PlayerData, PlayerState, Action
+from .deck import Holding, Range
 
 
 class Player:
-    def __init__(self, id,  name, stack, table):
+    def __init__(self, id: str,  name: str, stack: float, rng: Range, table):
         self.id = id
         self.name = name
 
-        self.stack = stack
+        self.stack: float = stack
         self.table = table
 
-        self.acted = False
-        self.player_state = PlayerState.BASE
+        self.acted: bool = False
+        self.player_state: PlayerState = PlayerState.BASE
+    
+        self.preflop_range: Range = rng
+        self.holding: Holding | None = None
+        self.chips_bet: float = 0
 
-        self.chips_bet = 0
-
-        self.cards = []
-
-    def state(self, show_cards=False) -> PlayerData:
+    def state(self, show_cards: bool=False) -> PlayerData:
         if show_cards:
+            assert self.holding is not None, 'cards not dealt'
             return PlayerData(self.name,
                               self.stack,
                               self.player_state.value,
                               self.chips_bet,
-                              self.cards)
+                              str(self.holding))
         return PlayerData(self.name,
                           self.stack,
                           self.player_state.value,
@@ -36,9 +38,8 @@ class Player:
                          f'stack: {self.stack}',
                          f'state: {self.player_state.value}'])
 
-    def deal(self, cards):
-        assert len(cards) == 2
-        self.cards = cards
+    def deal(self, holding: Holding):
+        self.holding = holding
 
     def act(self, action: Action, amount=0.0):
         print(f'player: {self.name}\t action:{action.value} {amount}')
@@ -77,7 +78,7 @@ class Player:
 
         self.table.current_round.action(amount)
 
-    def blind(self, amount):
+    def blind(self, amount: float):
         print(f'player {self.name} posts blind {amount}')
         assert amount != self.stack, 'use all-in for that'
         assert amount < self.stack, 'dont have enough for blind'
