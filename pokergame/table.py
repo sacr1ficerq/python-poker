@@ -3,6 +3,8 @@ from .round import Round
 from .states import TableData, Street
 from .deck import Range
 
+from typing import Dict
+
 from dataclasses import asdict
 
 class Table:
@@ -71,7 +73,7 @@ class Table:
         assert p is not None, 'player not found'
         return asdict(p.state(show_cards=True))
 
-    def start_game(self, starting_pot: float):
+    def start_game(self, starting_pot: float) -> None:
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
         assert self.players[0].preflop_range is not None
@@ -82,7 +84,7 @@ class Table:
         self.game_started = True
         self.new_round()
 
-    def new_round(self):
+    def new_round(self) -> None:
         assert self.game_started
         assert self.current_round is None or self.current_round.round_ended, \
                'cant start new round while current round not emded'
@@ -93,7 +95,7 @@ class Table:
         self.current_round = Round(self.players, self, self.starting_pot)
         self.current_round.preflop()
 
-    def act(self, action: Action, player_name: str, amount: float):
+    def act(self, action: Action, player_name: str, amount: float) -> None:
         round = self.current_round
         assert isinstance(amount, float) or isinstance(amount, int)
         assert round is not None

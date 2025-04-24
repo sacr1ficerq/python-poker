@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
+from typing import Dict
+
 suits = list('shdc')
 ranks = list('AKQJT98765432')
 
@@ -111,6 +113,27 @@ class Range:
         ax.set_aspect('equal') # Make cells square
         plt.tight_layout()
         plt.show()
+
+    def todict(self) -> Dict[str, float]:
+        d = {}
+        for i in range(13):
+            for j in range(13):
+                p = self._range[i, j] 
+                if p != 0:
+                    c1, c2 = ranks[i], ranks[j]
+                    h = ''
+                    if i > j:
+                        h = f'{c1}{c2}o'
+                    elif i == j:
+                        h = f'{c1}{c2}'
+                    else:
+                        h = f'{c1}{c2}s'
+                    d[h] = p
+        return d
+
+    def __repr__(self) -> str:
+        return self.todict().__str__()
+                    
 
 class Deck:
     def __init__(self):

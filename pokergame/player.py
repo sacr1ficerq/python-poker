@@ -20,11 +20,12 @@ class Player:
     def state(self, show_cards: bool=False) -> PlayerData:
         if show_cards:
             assert self.holding is not None, 'cards not dealt'
+            cards = str(self.holding.c1), str(self.holding.c2)
             return PlayerData(self.name,
                               self.stack,
                               self.player_state.value,
                               self.chips_bet,
-                              str(self.holding))
+                              cards)
         return PlayerData(self.name,
                           self.stack,
                           self.player_state.value,

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .deck import Card, Holding
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from enum import Enum
 
 
@@ -37,7 +37,7 @@ class PlayerData:
     stack: float
     state: str
     bet: float
-    cards: Optional[str] = None
+    cards: Optional[Tuple[str, str]] = None
 
 
 @dataclass
