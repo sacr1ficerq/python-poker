@@ -18,6 +18,7 @@
 - Convert Table, Player and Round classes to new poker format without preflop (done)
 - Write basic tests for crating and staring game (done)
 - Cover whole game with tests
+- New example
 
 ### Game tree nodes
 
