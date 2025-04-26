@@ -44,7 +44,7 @@ class PlayerData:
 class RoundData:
     street: str
     maxBet: float
-    board: List[Card]
+    board: List[str]
     pot: float
     maxBetAmount: float
     minBetAmount: float

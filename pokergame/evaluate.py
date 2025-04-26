@@ -1,7 +1,7 @@
 from itertools import combinations
+from typing import Tuple, List, Dict
 
-
-def evaluate(cards):
+def evaluate(cards: List[str]) -> Tuple[str, List]:
     rank_order = '23456789TJQKA'
     suits = 'cdhs'
     ranks = sorted([rank_order.index(c[0]) for c in cards], reverse=True)
@@ -55,7 +55,7 @@ def evaluate(cards):
         return ("High Card", sorted(ranks, reverse=True)[:5])
 
 
-def evaluate_hand(board, players_cards):
+def evaluate_hand(board: List[str], players_cards: List[Tuple[str, str]]) -> List[Dict]:
     """players_cards
     Args:
         board: List of community cards
@@ -78,19 +78,19 @@ def evaluate_hand(board, players_cards):
     ]
 
     results = []
-    for i, player in enumerate(players_cards):
-        # Generate all possible 5-card combinations from board + player cards
-        possible_hands = list(combinations(board + list(player), 5))
-        best_hand = None
-        rank = None
+    for cards in players_cards:
+        # Generate all possible 5-card combinations from board + cards cards
+        assert len(board) == 5, 'Wrong board: ' + ','.join(board)
+        assert len(cards) == 2, 'Wrong player card: ' + ','.join(cards)
+        possible_hands: List[Tuple[str, str, str, str, str]] = list(combinations(board + list(cards), 5))
+        assert len(possible_hands) != 0, 'Wrong board or players cards:' + ','.join(board) +'; '+','.join(cards)
+
+        best_hand: Tuple[str, list] = evaluate(list(possible_hands[0]))
+        rank: int = hand_rankings.index(best_hand[0])
 
         for hand in possible_hands:
             current_hand = evaluate(list(hand))
             current_rank = hand_rankings.index(current_hand[0])
-            if best_hand is None:
-                best_hand = current_hand
-                rank = current_rank
-                continue
             best_rank = hand_rankings.index(best_hand[0])
             if current_rank > best_rank:
                 best_hand = current_hand
@@ -103,7 +103,7 @@ def evaluate_hand(board, players_cards):
                 rank = current_rank
 
         results.append({
-            "cards": player,
+            "cards": cards,
             "rank": rank,
             "best_hand": best_hand[0],
             "combination": best_hand[1]

@@ -4,7 +4,7 @@ from .player import PlayerState, Player
 
 from .states import RoundData, Street
 
-from typing import List
+from typing import List, Tuple
 
 class Round:
     def __init__(self, players: List[Player], table, starting_pot: float):
@@ -12,7 +12,7 @@ class Round:
         first = 1 - table.button
 
         assert len(players) == 2, 'wrong amount of players'
-        self.players = [players[first], players[1 - first]]
+        self.players: List[Player] = [players[first], players[1 - first]]
 
         print('new round')
         print('players:')
@@ -23,31 +23,31 @@ class Round:
             p.player_state = PlayerState.BASE
 
         self.table = table
-        self.button = table.button
+        self.button: int = table.button
 
-        self.sb = table.sb
-        self.bb = table.bb
+        self.sb: float = table.sb
+        self.bb: float = table.bb
 
-        self.street = Street.PREFLOP
-        self.deck = Deck()
-        self.pot = 0
-        self.max_bet = 0
-        self.board = []
+        self.street: Street = Street.PREFLOP
+        self.deck: Deck = Deck()
+        self.pot: float = 0
+        self.max_bet: float = 0
+        self.board: List[Card] = []
 
-        self.round_ended = False
+        self.round_ended: bool = False
 
-        self.max_bet_amount = min(self.players[0].stack, self.players[0].stack)
-        self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
+        self.max_bet_amount: float = min(self.players[0].stack, self.players[0].stack)
+        self.min_bet_amount: float = self.table.bb + self.sb  # preflop minraise
 
         self.starting_pot: float = starting_pot
-        self.starting_board = None
+        self.starting_board: List[Card] | None = None
 
-        self.acting = 0  # index of player who is currently to act
+        self.acting: int = 0  # index of player who is currently to act
 
     def preflop(self):
         # deal cards
         for p in self.players:
-            # TODO: remove unsymmetry
+            # TODO: remove assymetry
             holding = self.deck.sample_hand(p.preflop_range)
             p.deal(holding)
 
@@ -56,7 +56,7 @@ class Round:
         self.pot = self.starting_pot
         self.next_street()
 
-    def action(self, delta):
+    def action(self, delta: float):
         """
         Called after player acted
         delta: fresh chips put into the pot
@@ -112,6 +112,9 @@ class Round:
         match self.street:
             case Street.PREFLOP:
                 self.street = Street.FLOP
+                flop_cards = [self.deck.pop(), self.deck.pop(), self.deck.pop()]
+                print(f'flop: {flop_cards}')
+                self.board += flop_cards
             case Street.FLOP:
                 self.street = Street.TURN
                 turn_cards = [self.deck.pop()]
@@ -131,9 +134,11 @@ class Round:
     def showdown(self):
         print('showdown:')
         print('board:', self.board)
+        
+        players_cards: List[Tuple[str, str]] = [(str(p.holding.c1), str(p.holding.c2)) for p in self.players]
 
-        players_cards = [p.cards for p in self.players]
-        evals = evaluate_hand(self.board, players_cards)
+        board_cards = list(map(str, self.board))
+        evals = evaluate_hand(board_cards, players_cards)
 
         def rank(pair):
             return (pair[0]['rank'], pair[0]['combination'])
@@ -202,9 +207,10 @@ class Round:
         print('players: ', [p.state() for p in self.players])
 
     def state(self) -> RoundData:
+        board_cards = list(map(str, self.board))
         return RoundData(self.street.value,
                          self.max_bet,
-                         self.board,
+                         board_cards,
                          self.pot,
                          self.max_bet_amount,
                          self.min_bet_amount,

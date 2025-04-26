@@ -1,6 +1,6 @@
-from pokergame import Deck, Range, Card, Holding, Table, Player, Round
+from pokergame import Deck, Range, Card, Holding, Table, Player, Round, Action
 
-from typing import Dict
+from typing import Dict, List, Callable
 import pytest
 
 SB = 0.5
@@ -12,7 +12,7 @@ STARTING_POT = BB * 2.5 * 2
 def range_sb() -> Range:
     rng = Range()
     rng.set_holding(Holding(s='AcAh'), 0.8)     
-    rng.set_holding(Holding(s='JcAc'), 0.2)     
+    rng.set_holding(Holding(s='JsAc'), 0.2)     
     return rng
 
 @pytest.fixture
@@ -39,4 +39,36 @@ def round(table: Table) -> Round:
     table.start_game(STARTING_POT)
     assert table.current_round is not None
     return table.current_round
+
+
+@pytest.fixture
+def play(table: Table) -> Callable:
+    def res(line: List[str], table=table):
+        table.start_game(STARTING_POT)
+        # Example: ['b3.0', 'c', 'x', 'x', 'x', 'x']
+        players = ['BB', 'BUT']
+        round = table.current_round
+        assert round is not None
+        acting = players[round.acting]
+        print('acting:', acting)
+
+        for a in line:
+            match a[0]:
+                case 'f':
+                    table.act(Action.FOLD, acting, 0)
+                case 'x':
+                    table.act(Action.CHECK, acting, 0)
+                case 'c':
+                    amount = float(a[1:])
+                    table.act(Action.CALL, acting, amount)
+                case 'b':
+                    amount = float(a[1:])
+                    table.act(Action.BET, acting, amount)
+                case 'r':
+                    amount = float(a[1:])
+                    table.act(Action.RAISE, acting, amount)
+                case default:
+                    assert False, f"wrong action: '{a}'"
+            acting = players[round.acting]
+    return res
 
