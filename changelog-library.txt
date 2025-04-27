@@ -1,0 +1,144 @@
+Date:   Sat Apr 26 19:54:29 2025 +0300
+
+    New test system
+    
+    Add universal system for testing line.
+    Fixed bugs found with tests.
+
+Date:   Fri Apr 25 02:57:29 2025 +0300
+
+    Bugfix
+
+Date:   Thu Apr 24 18:14:17 2025 +0300
+
+    Cosmetics
+
+Date:   Tue Apr 22 21:16:15 2025 +0300
+
+    Project restructure for new type of poker
+    
+    In this version preflop game stage is substituted for selecting ranges
+    and pot size.
+    
+    - Converted Player, Round, Table classes to new version
+    - Added Makefile for nicer testing
+    - New test structure with classes and fixtures file
+    - Added basic tests for covering creating and starting game
+
+Date:   Sun Apr 20 08:59:11 2025 +0300
+
+    Start new version of Deck
+    
+    First steps towards skewed preflop sampling.
+    Added Card, Holding and Range classes, for improving
+    interaction with range structure and smoother range manipulation
+    experience.
+
+Date:   Sat Apr 19 02:25:28 2025 +0300
+
+    Bugfix
+
+Date:   Mon Apr 7 16:15:13 2025 +0300
+
+    Bugfix
+    
+    Fixed bug with al-in from button
+    Added a couple tests for this
+
+Date:   Mon Apr 7 15:23:10 2025 +0300
+
+    Add all-in support
+    
+    Now library handles all-ins.
+    Without tests its not clear all all-in situations are covered.
+    Added a couple of tests for all-ins:
+    - effective stack <= sb
+    - sb < effective stack <= bb
+    - effective stack > bb
+
+Date:   Sun Apr 6 23:41:39 2025 +0300
+
+    New format for state()
+    
+    Introduced new formats for states: TableData, PlayerData, RoundData.
+    Dataclasses can be converted to dict with asdict(). And thus become
+    easily serializable.
+    It allows for a much smoother refactoring expirience and sync between backend and
+    frontend. Also much nicer testing experience.
+    Added some tests.
+
+Date:   Sat Apr 5 21:14:15 2025 +0300
+
+    More tests
+
+Date:   Sat Apr 5 19:19:56 2025 +0300
+
+    Add tests + bugfix
+
+Date:   Tue Apr 1 13:26:33 2025 +0300
+
+    Pivot to heads-up + round_ended state
+    
+    Library master branch is now pivoted to HU poker.
+    Not HU games are no longer supported.
+    Added round_ended game phase during which state structure is different.
+
+Date:   Tue Apr 1 13:01:07 2025 +0300
+
+    Bugfix
+    
+    Fixed bug with preflop checking on bb.
+    Now new_round is not called automaticaly.
+    New showdown state.
+
+Date:   Sun Mar 30 18:08:48 2025 +0300
+
+    Add board to state() in round
+
+Date:   Sun Mar 30 14:40:49 2025 +0300
+
+    Add private states + Action Enum
+
+Date:   Tue Mar 25 19:56:26 2025 +0300
+
+    Update example.py
+
+Date:   Tue Mar 25 19:55:01 2025 +0300
+
+    Update README.md
+
+Date:   Tue Mar 25 19:52:55 2025 +0300
+
+    Bugfix + README
+
+Date:   Tue Mar 25 19:27:03 2025 +0300
+
+    v1.0
+    
+    Now library has complete functionality.
+    It's not tested with unit tests nor in production yet.
+
+Date:   Tue Mar 25 19:27:03 2025 +0300
+
+    v1.0
+    
+    Now library has complete functionality.
+    It's not tested with unit tests nor in production yet.
+
+Date:   Tue Mar 25 15:12:51 2025 +0300
+
+    Add postflop without showdown
+    
+    Now library works for the most part.
+    Need to run some tests and add best hand calculation.
+
+Date:   Tue Mar 25 13:15:26 2025 +0300
+
+    Add preflop
+    
+    Now library works correctly for preflop.
+    Added most of game non-showdown logic.
+
+Date:   Mon Mar 24 12:02:54 2025 +0300
+
+    Initial commit

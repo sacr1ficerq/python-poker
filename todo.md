@@ -9,6 +9,7 @@
 - Add testing (done)
 - Fix all-ins (done)
 - Refactor tests
+- Add testing with line e.g. line: 'r10.0cxb12.0f' (done)
 - Add testing with Hand class e.g. line: 'r10.0cxb12.0f' hands: ... board:...
 - Fully conver functionality with tests
 
