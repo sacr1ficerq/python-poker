@@ -97,7 +97,7 @@ class Round:
             # everyone acted and bets equalized
             self.next_street()
 
-    def next_street(self):
+    def next_street(self) -> None:
         for p in self.players:
             p.chips_bet = 0
             p.acted = False

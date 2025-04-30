@@ -35,6 +35,7 @@ class PlayerData:
     # id: str
     name: str
     stack: float
+    profit: float
     state: str
     bet: float
     cards: Optional[Tuple[str, str]] = None
@@ -56,3 +57,5 @@ class RoundData:
 class TableData:
     players: List[PlayerData]
     round: Optional[RoundData]
+    depth: float
+    startingPot: float

@@ -53,7 +53,7 @@ class TestLines:
             line = []
             for street in e:
                 line += street.split()
-            t = Table(str(i), SB, BB)
+            t = Table(str(i), starting_pot=STARTING_POT, depth=DEPTH, sb=SB, bb=BB)
             t.add_player(0, 'BB', DEPTH, range_bb)
             t.add_player(1, 'BUT', DEPTH, range_sb)
             play(line, t)

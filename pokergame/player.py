@@ -3,11 +3,12 @@ from .deck import Holding, Range
 
 
 class Player:
-    def __init__(self, id: str,  name: str, stack: float, rng: Range, table):
+    def __init__(self, id: str,  name: str, stack: float, rng: Range, table, profit: float=0):
         self.id: str = id
         self.name: str = name
 
         self.stack: float = stack
+        self.profit: float = profit
         self.table = table
 
         self.acted: bool = False
@@ -18,18 +19,16 @@ class Player:
         self.chips_bet: float = 0
 
     def state(self, show_cards: bool=False) -> PlayerData:
+        cards = None
         if show_cards:
             assert self.holding is not None, 'cards not dealt'
             cards = str(self.holding.c1), str(self.holding.c2)
-            return PlayerData(self.name,
-                              self.stack,
-                              self.player_state.value,
-                              self.chips_bet,
-                              cards)
         return PlayerData(self.name,
                           self.stack,
+                          self.profit,
                           self.player_state.value,
-                          self.chips_bet)
+                          self.chips_bet, 
+                          cards)
 
     def is_all_in(self) -> bool:
         return self.player_state == PlayerState.ALLIN

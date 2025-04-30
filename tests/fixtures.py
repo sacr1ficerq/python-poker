@@ -25,7 +25,7 @@ def range_bb() -> Range:
 
 @pytest.fixture
 def table(range_sb, range_bb) -> Table:
-    table = Table('test_table', SB, BB)
+    table = Table('test_table', starting_pot=STARTING_POT, depth=DEPTH, sb=SB, bb=BB)
     table.add_player(0, 'BB', DEPTH, range_bb)
     table.add_player(1, 'BUT', DEPTH, range_sb)
     return table
@@ -36,7 +36,7 @@ def players(table) -> Dict[str, Player]:
 
 @pytest.fixture
 def round(table: Table) -> Round:
-    table.start_game(STARTING_POT)
+    table.start_game()
     assert table.current_round is not None
     return table.current_round
 
@@ -44,7 +44,7 @@ def round(table: Table) -> Round:
 @pytest.fixture
 def play(table: Table) -> Callable:
     def res(line: List[str], table=table):
-        table.start_game(STARTING_POT)
+        table.start_game()
         # Example: ['b3.0', 'c', 'x', 'x', 'x', 'x']
         players = ['BB', 'BUT']
         round = table.current_round

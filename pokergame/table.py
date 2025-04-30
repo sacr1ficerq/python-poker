@@ -8,7 +8,7 @@ from typing import Dict
 from dataclasses import asdict
 
 class Table:
-    def __init__(self, id: str, sb: float, bb: float):
+    def __init__(self, id: str, starting_pot: float, depth: float, sb: float, bb: float):
         self.id = id
 
         assert sb <= bb, 'sb > bb'
@@ -20,6 +20,8 @@ class Table:
         self.current_round: Round | None = None
 
         self.game_started: bool = False
+        self.starting_pot: float = starting_pot;
+        self.depth: float = depth;
 
     def add_player(self, id, name: str, stack: float, preflop_range: Range):
         self.game_started = False
@@ -47,10 +49,10 @@ class Table:
         if self.current_round:
             show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
             players = [p.state(show_cards) for p in self.players]
-            return TableData(players, self.current_round.state())
+            return TableData(players, self.current_round.state(), self.depth, self.starting_pot)
         else:
             players = [p.state() for p in self.players]
-            return TableData(players, None)
+            return TableData(players, None, self.depth, self.starting_pot)
 
     def data(self, show_cards: bool=False) -> dict:
         if self.current_round:
@@ -73,13 +75,11 @@ class Table:
         assert p is not None, 'player not found'
         return asdict(p.state(show_cards=True))
 
-    def start_game(self, starting_pot: float) -> None:
+    def start_game(self) -> None:
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
         assert self.players[0].preflop_range is not None
         assert self.players[1].preflop_range is not None
-
-        self.starting_pot = starting_pot
 
         self.game_started = True
         self.new_round()
@@ -90,6 +90,11 @@ class Table:
                'cant start new round while current round not emded'
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
+
+        for p in self.players:
+            profit = p.stack - self.depth
+            p.profit += profit;
+            p.stack = self.depth
 
         self.button = 1 - self.button
         self.current_round = Round(self.players, self, self.starting_pot)
