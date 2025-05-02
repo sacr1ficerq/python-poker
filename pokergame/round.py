@@ -37,7 +37,7 @@ class Round:
         self.round_ended: bool = False
 
         self.max_bet_amount: float = min(self.players[0].stack, self.players[0].stack)
-        self.min_bet_amount: float = self.table.bb + self.sb  # preflop minraise
+        self.min_bet_amount: float = self.bb
 
         self.starting_pot: float = starting_pot
         self.starting_board: List[Card] | None = None
@@ -50,6 +50,8 @@ class Round:
             # TODO: remove assymetry
             holding = self.deck.sample_hand(p.preflop_range)
             p.deal(holding)
+
+        self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
 
         for p in self.players:
             p.chips_bet = 0
@@ -102,7 +104,11 @@ class Round:
             p.chips_bet = 0
             p.acted = False
             p.player_state = PlayerState.BASE
+            p.last_action = ''
             print(f'{p.name} chilling')
+        
+        self.min_bet_amount = self.bb
+        self.max_bet_amount = min(self.players, key=lambda x: x.stack).stack
 
         self.max_bet = 0
         self.acting = 0
@@ -201,6 +207,12 @@ class Round:
             w.stack += chips_won
             w.player_state = PlayerState.WINNING
             print(f'{w.name} wins {chips_won}')
+
+        t = self.table
+        for p in t.players:
+            profit = p.stack - t.depth - t.starting_pot / 2
+            p.profit += profit;
+            p.stack = t.depth
 
         print('winners:', winners)
         print('loosers:', list(filter(lambda p: p.player_state == PlayerState.LOOSING, self.players)))

@@ -38,6 +38,7 @@ class PlayerData:
     profit: float
     state: str
     bet: float
+    lastAction: Optional[str]
     cards: Optional[Tuple[str, str]] = None
 
 

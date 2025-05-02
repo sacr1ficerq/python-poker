@@ -13,6 +13,7 @@ class Player:
 
         self.acted: bool = False
         self.player_state: PlayerState = PlayerState.BASE
+        self.last_action: str = ''
     
         self.preflop_range: Range = rng
         self.holding: Holding | None = None
@@ -28,6 +29,7 @@ class Player:
                           self.profit,
                           self.player_state.value,
                           self.chips_bet, 
+                          self.last_action,
                           cards)
 
     def is_all_in(self) -> bool:
@@ -59,19 +61,24 @@ class Player:
         match action:
             case Action.FOLD:
                 self.player_state = PlayerState.FOLDED
+                self.last_action = 'FOLD'
             case Action.CHECK:
                 assert self.chips_bet == round.max_bet, \
                     'cant check with uncalled bet'
+                self.last_action = 'CHECK'
             case Action.CALL:
                 assert round.max_bet != 0, 'cant call with max_bet == 0'
                 assert amount + self.chips_bet == round.max_bet, \
                     f'wrong amount, correct amount: {round.max_bet - self.chips_bet}'
+                self.last_action = f'CALL {amount}'
             case Action.BET:
                 assert round.max_bet == 0, 'cant bet with max_bet != 0'
                 assert amount >= round.min_bet_amount
+                self.last_action = f'BET {amount}'
             case Action.RAISE:
                 assert round.max_bet != 0
                 assert amount >= round.min_bet_amount
+                self.last_action = f'RAISE {amount}'
 
         self.stack -= amount
         self.chips_bet += amount

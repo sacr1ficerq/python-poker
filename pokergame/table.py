@@ -91,10 +91,6 @@ class Table:
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
 
-        for p in self.players:
-            profit = p.stack - self.depth
-            p.profit += profit;
-            p.stack = self.depth
 
         self.button = 1 - self.button
         self.current_round = Round(self.players, self, self.starting_pot)

@@ -10,8 +10,11 @@ from json import dumps
 class TestBasic:
     def test_start(self, round: Round, players: Dict[str, Player]):
         # Game started
+        assert players['BB'].profit + players['BUT'].profit == 0
         assert round.street == Street.FLOP
         assert players['BB'].holding != None
+
+        assert round.min_bet_amount == BB
         print('BB range: ', players['BB'].preflop_range)
         print('BB has: ', players['BB'].holding)
 
@@ -21,9 +24,11 @@ class TestBasic:
 
         assert round.pot == STARTING_POT
 
-    def test_checkdown(self, play: Callable):
+    def test_checkdown(self, play: Callable, players: Dict[str, Player]):
+        assert players['BB'].profit + players['BUT'].profit == 0
         line = ('x x').split() + ('x x').split() + ('x x').split()
         play(line)
+        assert players['BB'].profit + players['BUT'].profit == 0
 
 class TestBasicLines:
     def test_cbet(self, play: Callable):
