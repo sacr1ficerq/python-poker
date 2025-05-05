@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
-from typing import Dict
+from typing import Dict, List
 
 suits = list('shdc')
 ranks = list('AKQJT98765432')
@@ -159,6 +159,15 @@ class Deck:
         self.card_live[idx1] = False
         self.card_live[idx2] = False
         return Holding(Card(idx1), Card(idx2))
+
+    def sample_runout(self, n: int) -> List[Card]:
+        live = self.card_live.copy()
+        res = []
+        for i in range(n):
+            idx = np.random.choice(52, p=live / live.sum())
+            live[idx] = 0
+            res.append(Card(idx=idx))
+        return res
 
     def pop(self) -> Card:
         d = self.card_live.sum()

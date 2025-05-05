@@ -5,9 +5,8 @@ import pytest
 
 SB = 0.5
 BB = 1
-DEPTH = 100
-STARTING_POT = BB * 2.5 * 2
-
+DEPTH = 120
+STARTING_POT = BB * 12
 @pytest.fixture
 def range_sb() -> Range:
     rng = Range()
@@ -25,9 +24,11 @@ def range_bb() -> Range:
 
 @pytest.fixture
 def table(range_sb, range_bb) -> Table:
-    table = Table('test_table', starting_pot=STARTING_POT, depth=DEPTH, sb=SB, bb=BB)
-    table.add_player(0, 'BB', DEPTH, range_bb)
-    table.add_player(1, 'BUT', DEPTH, range_sb)
+    table = Table('test_table', starting_pot=STARTING_POT, depth=DEPTH, move_button=True, sb=SB, bb=BB)
+    but = Player('0', 'BUT', DEPTH, range_sb, table)
+    bb = Player('1', 'BB', DEPTH, range_bb, table)
+    table.add_player(but)
+    table.add_player(bb)
     return table
 
 @pytest.fixture

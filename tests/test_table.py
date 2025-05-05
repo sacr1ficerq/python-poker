@@ -11,9 +11,9 @@ from fixtures import *
 class TestBasic:
     def test_create(self, range_sb: Range, range_bb: Range):
         # add/remove players
-        table = Table('test_table', starting_pot=STARTING_POT, depth=DEPTH, sb=SB, bb=BB)
-        table.add_player(0, 'BB', DEPTH, range_bb)
-        table.add_player(1, 'BUT', DEPTH, range_sb)
+        table = Table('test_table', starting_pot=STARTING_POT, depth=DEPTH, move_button=False, sb=SB, bb=BB)
+        bb = Player('0', 'BB', DEPTH, range_sb, table)
+        but = Player('1', 'BUT', DEPTH, range_bb, table)
 
     def test_start(self, table: Table):
         # add/remove players

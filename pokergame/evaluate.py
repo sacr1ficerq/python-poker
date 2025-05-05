@@ -1,6 +1,8 @@
 from itertools import combinations
 from typing import Tuple, List, Dict
 
+from .deck import Card, Holding, Deck
+
 def evaluate(cards: List[str]) -> Tuple[str, List]:
     rank_order = '23456789TJQKA'
     suits = 'cdhs'
@@ -59,7 +61,7 @@ def evaluate_hand(board: List[str], players_cards: List[Tuple[str, str]]) -> Lis
     """players_cards
     Args:
         board: List of community cards
-        *players_cards: Variable number of player card lists
+        players_cards: Variable number of player card lists
     Returns:
         Dictionary with each player's best hand combination
     """
@@ -111,3 +113,33 @@ def evaluate_hand(board: List[str], players_cards: List[Tuple[str, str]]) -> Lis
 
     return results
 
+def score(hero_holding: Holding, villain_holding: Holding, board: List[Card]) -> float:
+    # return in [0, 0.5, 1]
+    assert len(board) == 5
+    hero_cards = (str(hero_holding.c1), str(hero_holding.c2))
+    villain_cards = (str(villain_holding.c1), str(villain_holding.c2))
+
+    board_cards = list(map(str, board))
+
+    evals = evaluate_hand(board_cards, [hero_cards, villain_cards])
+
+    def rank(e):
+        return (e['rank'], e['combination'])
+    if rank(evals[0]) == rank(evals[1]):
+        return 0.5
+    return rank(evals[0]) > rank(evals[1])
+
+
+def equity(deck: Deck, hero_hand: Holding, villain_hand: Holding, board: List[Card], iter:int=100) -> float:
+    assert len(board) in [0, 3, 4]
+    s1 = 0
+    s2 = 0
+    for i in range(iter):
+        runout = deck.sample_runout(5-len(board))
+        # print('runout: ', board+runout)
+
+        res = score(hero_hand, villain_hand, board + runout)
+        s1 += res
+        s2 += 1 - res
+    # print('scores:', s1, s2)
+    return s1 / iter

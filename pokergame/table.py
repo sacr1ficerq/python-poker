@@ -3,19 +3,21 @@ from .round import Round
 from .states import TableData, Street
 from .deck import Range
 
-from typing import Dict
+from typing import Dict, List
 
 from dataclasses import asdict
 
 class Table:
-    def __init__(self, id: str, starting_pot: float, depth: float, sb: float, bb: float):
+    def __init__(self, id: str, starting_pot: float, depth: float, move_button:bool, sb: float, bb: float):
         self.id = id
 
         assert sb <= bb, 'sb > bb'
         self.bb = bb
         self.sb = sb
-        self.players = []
+        self.players: List[Player] = []
+
         self.button = 0  # button index
+        self.move_button = move_button
 
         self.current_round: Round | None = None
 
@@ -23,11 +25,9 @@ class Table:
         self.starting_pot: float = starting_pot;
         self.depth: float = depth;
 
-    def add_player(self, id, name: str, stack: float, preflop_range: Range):
+    def add_player(self, player: Player) -> None:
         self.game_started = False
         self.current_round = None
-
-        player = Player(id, name, stack, preflop_range, self)
         self.players.append(player)
 
     def get_player(self, name: str) -> Player | None:
@@ -81,18 +81,19 @@ class Table:
         assert self.players[0].preflop_range is not None
         assert self.players[1].preflop_range is not None
 
-        self.game_started = True
         self.new_round()
+        self.game_started = True
 
     def new_round(self) -> None:
-        assert self.game_started
         assert self.current_round is None or self.current_round.round_ended, \
                'cant start new round while current round not emded'
         n = len(self.players)
         assert n == 2, 'wrong amount of players'
 
+        if self.move_button and self.game_started:
+            self.button = 1 - self.button
+            self.players[0].preflop_range, self.players[1].preflop_range = self.players[1].preflop_range, self.players[0].preflop_range
 
-        self.button = 1 - self.button
         self.current_round = Round(self.players, self, self.starting_pot)
         self.current_round.preflop()
 

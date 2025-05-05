@@ -58,11 +58,19 @@ class TestLines:
             line = []
             for street in e:
                 line += street.split()
-            t = Table(str(i), starting_pot=STARTING_POT, depth=DEPTH, sb=SB, bb=BB)
-            t.add_player(0, 'BB', DEPTH, range_bb)
-            t.add_player(1, 'BUT', DEPTH, range_sb)
+            t = Table(str(i), starting_pot=STARTING_POT, depth=DEPTH, move_button=True, sb=SB, bb=BB)
+
+            but = Player('0', 'BUT', DEPTH, range_sb, t)
+            bb = Player('1', 'BB', DEPTH, range_bb, t)
+            t.add_player(but)
+            t.add_player(bb)
+
             play(line, t)
             dumps(t.data())
+            assert t.players[0].profit + t.players[1].profit == 0
+            t.new_round()
+            assert t.players[0].profit + t.players[1].profit == 0
+            print('profits:', t.players[0].profit, t.players[1].profit)
 
 
 class TestAllIn:

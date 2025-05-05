@@ -4,6 +4,7 @@ from .player import PlayerState, Player
 
 from .states import RoundData, Street
 
+import numpy as np
 from typing import List, Tuple
 
 class Round:
@@ -46,10 +47,13 @@ class Round:
 
     def preflop(self):
         # deal cards
-        for p in self.players:
-            # TODO: remove assymetry
-            holding = self.deck.sample_hand(p.preflop_range)
-            p.deal(holding)
+        first = np.random.randint(0, 1)
+        
+        holding = self.deck.sample_hand(self.players[first].preflop_range)
+        self.players[first].deal(holding)
+
+        holding = self.deck.sample_hand(self.players[1 - first].preflop_range)
+        self.players[1 - first].deal(holding)
 
         self.min_bet_amount = self.table.bb + self.sb  # preflop minraise
 
