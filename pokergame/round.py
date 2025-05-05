@@ -1,4 +1,4 @@
-from .evaluate import evaluate_hand
+from .evaluate import evaluate_hand, equity
 from .deck import Deck, Card, Holding
 from .player import PlayerState, Player
 
@@ -59,6 +59,7 @@ class Round:
 
         for p in self.players:
             p.chips_bet = 0
+            p.last_action = '' # TODO: set to last preflop action
         self.pot = self.starting_pot
         self.next_street()
 
@@ -108,7 +109,6 @@ class Round:
             p.chips_bet = 0
             p.acted = False
             p.player_state = PlayerState.BASE
-            p.last_action = ''
             print(f'{p.name} chilling')
         
         self.min_bet_amount = self.bb
@@ -145,8 +145,9 @@ class Round:
         print('showdown:')
         print('board:', self.board)
         
-        players_cards: List[Tuple[str, str]] = [(str(p.holding.c1), str(p.holding.c2)) for p in self.players]
-
+        assert all(list(map(lambda p: p.holding is not None, self.players)))
+        players_cards: List[Tuple[str, str]] = [(str(p.holding.c1), str(p.holding.c2)) for p in self.players] # type: ignore
+        
         board_cards = list(map(str, self.board))
         evals = evaluate_hand(board_cards, players_cards)
 
@@ -165,42 +166,41 @@ class Round:
         self.win(winners)
 
     def run(self):
+        self.max_bet = 0
         for p in self.players:
             p.chips_bet = 0
-        hero_state = self.players[0].player_state.value
-        villain_state = self.players[1].player_state.value
+        if self.street == Street.RIVER:
+            return self.showdown()
+
+        hero, villain = self.players
+        hero_state = hero.player_state.value
+        villain_state = villain.player_state.value
         assert 'all-in' in [hero_state, villain_state], \
             'no one is all-in ' + hero_state + ' ' + villain_state
 
-        self.max_bet = 0
+        if self.street == Street.SHOWDOWN:
+            return
+        assert hero.holding is not None and villain.holding is not None
+        eq: float = round(equity(self.deck, hero.holding, villain.holding, self.board) * 100, 2)
+        hero.last_action = f'{eq}%'
+        villain.last_action = f'{100 - eq}%'
+        
+        chips_won = round(eq/100 * self.pot, 2)
+        hero.stack += chips_won
+        villain.stack += self.pot - chips_won
+        
+        self.round_ended = True
+        self.street = Street.SHOWDOWN
 
-        match self.street:
-            case Street.PREFLOP:
-                self.street = Street.FLOP
-                if self.starting_board:
-                    flop_cards = self.starting_board
-                else:
-                    flop_cards = [self.deck.pop(),
-                                  self.deck.pop(),
-                                  self.deck.pop()]
-                print(f'flop: {flop_cards}')
-                self.board = flop_cards
-            case Street.FLOP:
-                self.street = Street.TURN
-                turn_cards = [self.deck.pop()]
-                print(f'turn: {turn_cards}')
-                self.board += turn_cards
-            case Street.TURN:
-                self.street = Street.RIVER
-                river_cards = [self.deck.pop()]
-                print(f'river: {river_cards}')
-                self.board += river_cards
-            case Street.RIVER:
-                self.street = Street.SHOWDOWN
-                return self.showdown()
-            case Street.SHOWDOWN:
-                return  # wait for next round start
-        self.run()
+        t = self.table
+
+        profit = hero.stack - t.depth - t.starting_pot / 2
+        hero.profit += profit;
+        hero.stack = t.depth
+        
+        villain.profit -= profit
+        villain.stack = t.depth
+
 
     def win(self, winners):
         self.round_ended = True

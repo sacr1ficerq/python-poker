@@ -8,7 +8,7 @@ from typing import List
 class TestEquity:
     def test_basic(self):
         deck = Deck()
-        board: List[Card] = list(map(lambda s: Card(s=s), ['3h', '3c', '3s']))
+        board: List[Card] = list(map(lambda s: Card(s=s), ['3h', '3c', '3s', '5s']))
         a = Holding(s='KhKc')
         b = Holding(s='AcAh')
         for c in board + [a.c1, a.c2, b.c1, b.c2]:

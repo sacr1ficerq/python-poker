@@ -131,7 +131,7 @@ def score(hero_holding: Holding, villain_holding: Holding, board: List[Card]) ->
 
 
 def equity(deck: Deck, hero_hand: Holding, villain_hand: Holding, board: List[Card], iter:int=100) -> float:
-    assert len(board) in [0, 3, 4]
+    assert len(board) in [0, 3, 4], 'board: '+ ', '.join(map(str, board))
     s1 = 0
     s2 = 0
     for i in range(iter):

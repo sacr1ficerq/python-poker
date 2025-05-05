@@ -31,17 +31,20 @@ class TestBasic:
         assert players['BB'].profit + players['BUT'].profit == 0
 
 class TestBasicLines:
-    def test_cbet(self, play: Callable):
+    def test_cbet(self, play: Callable, players: Dict[str, Player]):
         line = ('x b3.0 c3.0').split() + ('x x').split() + ('x x').split()
         play(line)
+        assert players['BB'].profit + players['BUT'].profit == 0
 
-    def test_xr(self, play: Callable):
+    def test_xr(self, play: Callable, players):
         line = ('x b3.0 r9.0 f').split()
         play(line)
+        assert players['BB'].profit + players['BUT'].profit == 0
 
-    def test_bxb(self, play: Callable):
+    def test_bxb(self, play: Callable, players):
         line = ('x b3.0 c3.0').split() + ('x x').split() + ('x b12.0 c12.0').split()
         play(line)
+        assert players['BB'].profit + players['BUT'].profit == 0
 
 
 class TestLines:
@@ -74,7 +77,39 @@ class TestLines:
 
 
 class TestAllIn:
-    pass
+    def test_flop(self, round: Round, players: Dict[str, Player]):
+        assert players['BB'].profit + players['BUT'].profit == 0
+        assert round.street == Street.FLOP
+        assert players['BB'].holding != None
+
+        assert round.min_bet_amount == BB
+        print('BB range: ', players['BB'].preflop_range)
+        print('BB has: ', players['BB'].holding)
+
+        assert players['BUT'].holding != None
+        print('BUT range: ', players['BUT'].preflop_range)
+        print('BUT has: ', players['BUT'].holding)
+
+        t: Table = round.table
+        t.act(Action.BET, 'BB', players['BB'].stack)
+        t.act(Action.CALL, 'BUT', players['BUT'].stack)
+        print('Players are all-in')
+        print('BB:', players['BB'].last_action)
+        print('BUT:', players['BUT'].last_action)
+
+    def test_river(self, round: Round, players: Dict[str, Player]):
+        t: Table = round.table
+        t.act(Action.CHECK, 'BB', 0)
+        t.act(Action.CHECK, 'BUT', 0)
+
+        t.act(Action.CHECK, 'BB', 0)
+        t.act(Action.CHECK, 'BUT', 0)
+
+        t.act(Action.BET, 'BB', players['BB'].stack)
+        t.act(Action.CALL, 'BUT', players['BUT'].stack)
+        print('Players are all-in')
+        print('BB:', players['BB'].last_action)
+        print('BUT:', players['BUT'].last_action)
 
 class TestShowdown:
     pass

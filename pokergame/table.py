@@ -22,8 +22,10 @@ class Table:
         self.current_round: Round | None = None
 
         self.game_started: bool = False
-        self.starting_pot: float = starting_pot;
-        self.depth: float = depth;
+        self.starting_pot: float = starting_pot
+        self.depth: float = depth
+
+        self.hands_played: int = 0
 
     def add_player(self, player: Player) -> None:
         self.game_started = False
@@ -46,24 +48,20 @@ class Table:
         self.players.remove(p)
 
     def state(self, show_cards: bool=False) -> TableData:
+        round = None
+        show_cards = False
         if self.current_round:
             show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
-            players = [p.state(show_cards) for p in self.players]
-            return TableData(players, self.current_round.state(), self.depth, self.starting_pot)
-        else:
-            players = [p.state() for p in self.players]
-            return TableData(players, None, self.depth, self.starting_pot)
+            round = asdict(self.current_round.state())
+        players = [asdict(p.state(show_cards)) for p in self.players]
+        return TableData(players,
+                         round,
+                         self.depth,
+                         self.starting_pot,
+                         handsPlayed=self.hands_played)
 
     def data(self, show_cards: bool=False) -> dict:
-        if self.current_round:
-            show_cards = show_cards or self.current_round.street == Street.SHOWDOWN
-            players = [asdict(p.state(show_cards)) for p in self.players]
-            but = self.players[self.button].name
-            return {'players': players, 'button': but, 'round': asdict(self.current_round.state())}
-
-        players = [asdict(p.state()) for p in self.players]
-        but = self.players[self.button].name
-        return {'players': players, 'button': but}
+        return asdict(self.state(show_cards))
 
     def private_state(self, player_name):
         p = self.get_player(player_name)
@@ -93,6 +91,8 @@ class Table:
         if self.move_button and self.game_started:
             self.button = 1 - self.button
             self.players[0].preflop_range, self.players[1].preflop_range = self.players[1].preflop_range, self.players[0].preflop_range
+        if self.game_started:
+            self.hands_played += 1
 
         self.current_round = Round(self.players, self, self.starting_pot)
         self.current_round.preflop()

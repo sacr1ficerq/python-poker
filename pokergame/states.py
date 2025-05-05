@@ -55,7 +55,8 @@ class RoundData:
 
 @dataclass
 class TableData:
-    players: List[PlayerData]
-    round: Optional[RoundData]
+    players: List[dict]
+    round: Optional[dict]
     depth: float
     startingPot: float
+    handsPlayed: int
