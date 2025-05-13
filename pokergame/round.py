@@ -117,6 +117,7 @@ class Round:
         self.max_bet = 0
         self.acting = 0
         self.players[self.acting].player_state = PlayerState.ACTING
+        self.players[self.acting].last_action = ''
         print(f'{self.players[self.acting].name} acting')
 
         match self.street:
@@ -170,6 +171,7 @@ class Round:
         for p in self.players:
             p.chips_bet = 0
         if self.street == Street.RIVER:
+            self.street = Street.SHOWDOWN
             return self.showdown()
 
         hero, villain = self.players
