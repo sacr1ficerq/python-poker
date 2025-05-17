@@ -1,29 +1,10 @@
 from pokergame.table import Table
-from pokergame.player import Action
+from pokergame.player import Action, Player
+from pokergame import Range, Holding
 import uuid
 
 
 games = {}
-
-
-def pretty_print(data):
-    print('table data:')
-    for k, v in data.items():
-        if k == 'players' or k == 'round':
-            continue
-        print(f'{k:>12}:\t{v:>12}')
-    if 'round' in data:
-        print('current round:')
-        for k, v in data['round'].items():
-            # if k != 'players': print(f'{k:>12}:\t{v:>12}')
-            print(k, v)
-    for d in data['players']:
-        for k, v in d.items():
-            if k != 'name' and k != 'cards':
-                print(f'{k:>12}:\t{v:>12}')
-            else:
-                print(v)
-
 
 def generate_id():
     # Generate unique ID for the game
@@ -34,24 +15,27 @@ def generate_id():
 
 
 # create table
-t = Table(generate_id(), sb=1, bb=2)
+t = Table(generate_id(),starting_pot=5, depth=97.5, move_button=True, sb=1, bb=2)
 print("table created")
 
-
 # add/remove players
-t.add_player(1, 'zamazer', 100)
-t.add_player(2, 'labazer', 200)
+r1 = Range()
+r1.set_holding(Holding(s='AcAh'), 0.8)
+r1.set_holding(Holding(s='JsAc'), 0.2)
 
-t.remove_player('labazer')
+r2 = Range()
+r2.set_holding(Holding(s='KcKh'), 0.8)
+r2.set_holding(Holding(s='QsKc'), 0.2)
 
-t.add_player(3, 'mamaz', 1500)
-# pretty_print(t.data())
+p2 = Player('1', 'mamaz', 100, r2, t, 0)
+p1 = Player('0', 'zamazer', 100, r1, t, 0)
+
+t.add_player(p2)
+t.add_player(p1)
 
 # start game
 t.start_game()
 print('game started')
-
-# pretty_print(t.data())
 
 print('private datas:')
 for player_name in ['zamazer', 'mamaz']:
@@ -60,8 +44,6 @@ for player_name in ['zamazer', 'mamaz']:
 
 # Hand 1
 # preflop
-t.act(action=Action.CALL, player_name='mamaz', amount=1.0)
-t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 
 # flop
 t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
@@ -82,11 +64,8 @@ print('private datas:')
 for player_name in ['zamazer', 'mamaz']:
     print('player name:', player_name)
     print(t.private_data(player_name))
-# preflop
-t.act(action=Action.CALL, player_name='zamazer', amount=1.0)
-t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 
-print(*t.players, sep='\n')
+# preflop (there is no preflop)
 
 # flop
 t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
@@ -99,5 +78,3 @@ t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
 # river
 t.act(action=Action.CHECK, player_name='mamaz', amount=0.0)
 t.act(action=Action.CHECK, player_name='zamazer', amount=0.0)
-
-pretty_print(t.data())
