@@ -7,6 +7,12 @@ SB = 0.5
 BB = 1
 DEPTH = 120
 STARTING_POT = BB * 12
+
+@pytest.fixture(autouse=True)
+def setup_logging():
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
 @pytest.fixture
 def range_sb() -> Range:
     rng = Range()

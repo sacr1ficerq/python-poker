@@ -7,6 +7,15 @@ from .states import RoundData, Street
 import numpy as np
 from typing import List, Tuple
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
 class Round:
     def __init__(self, players: List[Player], table, starting_pot: float):
         # players in game (including all_in) sorted by left to act
@@ -15,9 +24,9 @@ class Round:
         assert len(players) == 2, 'wrong amount of players'
         self.players: List[Player] = [players[first], players[1 - first]]
 
-        print('new round')
-        print('players:')
-        print(*map(lambda p: p.name, self.players), sep='\n')
+        logger.info('New round')
+        logger.debug('Players: %s', '\n'.join(map(lambda p: p.name, self.players)))
+
         for p in self.players:
             p.chips_bet = 0
             p.acted = False
@@ -80,7 +89,7 @@ class Round:
 
         if not hero.is_all_in():
             hero.player_state = PlayerState.ACTING
-            print(f'{hero.name} acting')
+            logger.info(f'{hero.name} acting')
 
         assert delta >= 0
         if delta != 0:
@@ -109,7 +118,7 @@ class Round:
             p.chips_bet = 0
             p.acted = False
             p.player_state = PlayerState.BASE
-            print(f'{p.name} chilling')
+            logger.debug(f'{p.name} chilling')
         
         self.min_bet_amount = self.bb
         self.max_bet_amount = min(self.players, key=lambda x: x.stack).stack
@@ -118,23 +127,23 @@ class Round:
         self.acting = 0
         self.players[self.acting].player_state = PlayerState.ACTING
         self.players[self.acting].last_action = ''
-        print(f'{self.players[self.acting].name} acting')
+        logger.info(f'{self.players[self.acting].name} acting')
 
         match self.street:
             case Street.PREFLOP:
                 self.street = Street.FLOP
                 flop_cards = [self.deck.pop(), self.deck.pop(), self.deck.pop()]
-                print(f'flop: {flop_cards}')
+                logger.info(f'flop: {flop_cards}')
                 self.board += flop_cards
             case Street.FLOP:
                 self.street = Street.TURN
                 turn_cards = [self.deck.pop()]
-                print(f'turn: {turn_cards}')
+                logger.info(f'turn: {turn_cards}')
                 self.board += turn_cards
             case Street.TURN:
                 self.street = Street.RIVER
                 river_cards = [self.deck.pop()]
-                print(f'river: {river_cards}')
+                logger.info(f'river: {river_cards}')
                 self.board += river_cards
             case Street.RIVER:
                 self.street = Street.SHOWDOWN
@@ -143,8 +152,8 @@ class Round:
                 return  # wait for next round start
 
     def showdown(self):
-        print('showdown:')
-        print('board:', self.board)
+        logger.info('Showdown')
+        logger.info('Board: %s', self.board)
         
         assert all(list(map(lambda p: p.holding is not None, self.players)))
         players_cards: List[Tuple[str, str]] = [(str(p.holding.c1), str(p.holding.c2)) for p in self.players] # type: ignore
@@ -212,7 +221,7 @@ class Round:
             chips_won = self.pot / len(winners)
             w.stack += chips_won
             w.player_state = PlayerState.WINNING
-            print(f'{w.name} wins {chips_won}')
+            logger.info(f'{w.name} wins {chips_won}')
 
         t = self.table
         for p in t.players:
@@ -220,9 +229,9 @@ class Round:
             p.profit += profit;
             p.stack = t.depth
 
-        print('winners:', winners)
-        print('loosers:', list(filter(lambda p: p.player_state == PlayerState.LOOSING, self.players)))
-        print('players: ', [p.state() for p in self.players])
+        logger.info('winners: %s', winners)
+        logger.info('loosers: %s', list(filter(lambda p: p.player_state == PlayerState.LOOSING, self.players)))
+        logger.debug('players: %s', [p.state() for p in self.players])
 
     def state(self) -> RoundData:
         board_cards = list(map(str, self.board))

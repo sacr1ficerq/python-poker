@@ -7,11 +7,10 @@ install:
 	pip install --force-reinstall .
 
 test:
-	pytest -svx
+	pytest -svx 
 
-test-all:
-	pip install -e . && pytest -svx
+test-all: build
+	pytest -svx --log-cli-level=INFO
 
-test-base:
-	pip install -e . && pytest -svx tests/test_table.py tests/test_deck.py
-
+test-base: build
+	pytest -svx tests/test_table.py tests/test_deck.py --log-cli-level=INFO

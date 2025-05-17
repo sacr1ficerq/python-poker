@@ -1,6 +1,14 @@
 from .states import PlayerData, PlayerState, Action
 from .deck import Holding, Range
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 class Player:
     def __init__(self, id: str,  name: str, stack: float, rng: Range, table, profit: float=0):
@@ -44,7 +52,7 @@ class Player:
         self.holding = holding
 
     def act(self, action: Action, amount: float=0.0) -> None:
-        print(f'player: {self.name}\t action:{action.value} {amount}')
+        logger.info(f'Player: {self.name} -- action: {action.value} {amount}')
         assert self.player_state == PlayerState.ACTING, \
             f'cant {action.value} while {self.player_state}'
         round = self.table.current_round
@@ -86,7 +94,7 @@ class Player:
         self.table.current_round.action(amount)
 
     def blind(self, amount: float) -> None:
-        print(f'player {self.name} posts blind {amount}')
+        logger.info(f'Player {self.name} posts blind {amount}')
         assert amount != self.stack, 'use all-in for that'
         assert amount < self.stack, 'dont have enough for blind'
 
